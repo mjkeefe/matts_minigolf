@@ -21,7 +21,7 @@ const BOUNCER_COLORS = ['#FF5722', '#FF9800', '#E91E63', '#9C27B0', '#2196F3', '
 const RAMP_FORCE = 0.15;
 const MAX_BALL_SPEED = 24; // prevent tunneling and "disappearing" ball
 
-import { customHoles } from './holes/index.js';
+import { customHoles } from './courses/meadows/index.js';
 
 
 // Fade-in state
