@@ -56,10 +56,12 @@ let course = null;     // { tee, hole, outerWalls, obstacleWalls, ramps }
 // Ball
 let ball = null;       // { x, y, vx, vy, moving, angle }
 
-// Aiming
-let aiming = false;
-let aimStart = null;  // { x, y } — mousedown position
-let aimCurrent = null; // { x, y } — current mouse position
+// Aiming State
+let kbAimAngle = 0;      // radians
+let kbPowerValue = 0;    // 0 to MAX_POWER
+let kbPowerActive = false;
+let kbPowerDir = 1;      // 1 for up, -1 for down
+let keys = {};           // keep track of pressed keys
 
 // Phase flags
 let gameActive = false; // true while playing a hole
@@ -105,9 +107,11 @@ function resetState() {
     totalStrokes = 0;
     course = null;
     ball = null;
-    aiming = false;
-    aimStart = null;
-    aimCurrent = null;
+    kbAimAngle = 0;
+    kbPowerValue = 0;
+    kbPowerActive = false;
+    kbPowerDir = 1;
+    keys = {};
     gameActive = false;
     holeComplete = false;
     isPaused = false;
@@ -163,8 +167,34 @@ function gameLoop(timestamp) {
         return;
     }
 
+    handleInput(dt);
     update(dt);
     render();
+}
+
+function handleInput(dt) {
+    if (!ball || ball.moving || isPaused) return;
+
+    // Rotation
+    const rotationSpeed = 0.05 * dt;
+    if (keys['ArrowLeft']) {
+        kbAimAngle -= rotationSpeed;
+    }
+    if (keys['ArrowRight']) {
+        kbAimAngle += rotationSpeed;
+    }
+
+    // Power
+    if (kbPowerActive) {
+        kbPowerValue += kbPowerDir * 5 * dt;
+        if (kbPowerValue >= MAX_POWER) {
+            kbPowerValue = MAX_POWER;
+            kbPowerDir = -1;
+        } else if (kbPowerValue <= 0) {
+            kbPowerValue = 0;
+            kbPowerDir = 1;
+        }
+    }
 }
 
 // =====================================================
@@ -321,7 +351,7 @@ function buildGameDOM() {
 
     canvas = document.getElementById('mg-canvas');
     ctx = canvas.getContext('2d');
-    attachCanvasListeners();
+    attachListeners();
     updateHUD();
 }
 
@@ -818,89 +848,49 @@ function sinkBall() {
 // =====================================================
 //  Aiming & Shooting
 // =====================================================
-function attachCanvasListeners() {
-    if (!canvas) return;
-    // mousedown on canvas only (must click on/near the ball)
-    canvas.addEventListener('mousedown', onMouseDown);
-    // mousemove + mouseup on WINDOW so dragging outside the canvas works
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+function attachListeners() {
     window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
 }
 
 function removeCanvasListeners() {
-    if (!canvas) return;
-    canvas.removeEventListener('mousedown', onMouseDown);
-    window.removeEventListener('mousemove', onMouseMove);
-    window.removeEventListener('mouseup', onMouseUp);
     window.removeEventListener('keydown', onKeyDown);
+    window.removeEventListener('keyup', onKeyUp);
 }
 
 function onKeyDown(e) {
+    keys[e.key] = true;
     if (e.key === 'Escape') {
         toggleEscapeMenu();
     }
-}
-
-function getCanvasPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-    };
-}
-
-function onMouseDown(e) {
-    if (!gameActive || holeComplete || !ball || ball.moving) return;
-
-    const pos = getCanvasPos(e);
-    const dx = pos.x - ball.x;
-    const dy = pos.y - ball.y;
-
-    // Must click near the ball to start aiming
-    if (Math.hypot(dx, dy) <= BALL_RADIUS * 3) {
-        aiming = true;
-        aimStart = pos;
-        aimCurrent = pos;
+    // Allow Spacebar to advance to next hole
+    if (e.key === ' ' && holeComplete) {
+        advanceToNextHole();
+        return;
+    }
+    if (e.key === ' ' && gameActive && !holeComplete && ball && !ball.moving && !kbPowerActive) {
+        kbPowerActive = true;
+        kbPowerValue = 0;
+        kbPowerDir = 1;
     }
 }
 
-function onMouseMove(e) {
-    if (!aiming) return;
-    aimCurrent = getCanvasPos(e);
+function onKeyUp(e) {
+    if (e.key === ' ' && kbPowerActive) {
+        shoot();
+        kbPowerActive = false;
+        kbPowerValue = 0;
+    }
+    keys[e.key] = false;
 }
 
-function onMouseUp(e) {
-    if (!aiming || !ball) return;
+function shoot() {
+    if (!ball || kbPowerValue < 5) return;
 
-    const pos = getCanvasPos(e);
-    shoot(pos);
-    aiming = false;
-    aimStart = null;
-    aimCurrent = null;
-}
+    const speed = kbPowerValue * SPEED_SCALE;
 
-function onMouseLeave() {
-    // No longer cancels aim — mouse tracked at window level now
-}
-
-
-function shoot(releasePos) {
-    if (!ball || !aimStart) return;
-
-    // Drag vector: from release back to start (pull-back mechanic)
-    const dragX = aimStart.x - releasePos.x;
-    const dragY = aimStart.y - releasePos.y;
-    const dragLen = Math.hypot(dragX, dragY);
-
-    if (dragLen < 5) return; // too small, ignore
-
-    // Power scaled to drag distance
-    const power = Math.min(dragLen, MAX_POWER);
-    const speed = power * SPEED_SCALE; // pixels/frame at 60fps equivalent
-
-    ball.vx = (dragX / dragLen) * speed;
-    ball.vy = (dragY / dragLen) * speed;
+    ball.vx = Math.cos(kbAimAngle) * speed;
+    ball.vy = Math.sin(kbAimAngle) * speed;
     ball.moving = true;
 
     holeStrokes++;
@@ -1112,6 +1102,7 @@ function render() {
     drawWalls();
     drawBall();
     drawAimLine();
+    drawPowerMeter();
 
     ctx.restore();
 }
@@ -1423,39 +1414,54 @@ function drawBall() {
 }
 
 function drawAimLine() {
-    if (!aiming || !ball || !aimStart || !aimCurrent) return;
+    if (!ball || ball.moving || holeComplete) return;
 
-    const dragX = aimStart.x - aimCurrent.x;
-    const dragY = aimStart.y - aimCurrent.y;
-    const dragLen = Math.hypot(dragX, dragY);
+    const lineLen = 60;
+    const nx = Math.cos(kbAimAngle);
+    const ny = Math.sin(kbAimAngle);
 
-    if (dragLen < 5) return;
-
-    const clampedLen = Math.min(dragLen, MAX_POWER);
-    const nx = dragX / dragLen;
-    const ny = dragY / dragLen;
-
-    // Draw dashed line in shot direction
-    const endX = ball.x + nx * clampedLen;
-    const endY = ball.y + ny * clampedLen;
+    const endX = ball.x + nx * lineLen;
+    const endY = ball.y + ny * lineLen;
 
     ctx.save();
-    ctx.setLineDash([8, 6]);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.lineWidth = 2.5;
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(ball.x, ball.y);
     ctx.lineTo(endX, endY);
     ctx.stroke();
-
-    // Power dot at end
-    ctx.setLineDash([]);
-    const powerFrac = clampedLen / MAX_POWER;
-    ctx.fillStyle = `hsl(${120 - powerFrac * 120}, 100%, 60%)`;
-    ctx.beginPath();
-    ctx.arc(endX, endY, 5, 0, Math.PI * 2);
-    ctx.fill();
-
     ctx.restore();
+}
+
+function drawPowerMeter() {
+    if (!kbPowerActive) return;
+
+    const meterW = 20;
+    const meterH = 150;
+    const x = 610; // Slightly outside the main course area but inside the canvas
+    const y = CANVAS_H / 2 - meterH / 2;
+
+    // Background
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(x, y, meterW, meterH);
+
+    // Reversed Rainbow Ramp
+    const powerHeight = (kbPowerValue / MAX_POWER) * meterH;
+    const grad = ctx.createLinearGradient(x, y + meterH, x, y);
+    grad.addColorStop(0, '#f0f'); // Magenta (bottom)
+    grad.addColorStop(0.2, '#00f'); // Blue
+    grad.addColorStop(0.4, '#0ff'); // Cyan
+    grad.addColorStop(0.6, '#0f0'); // Green
+    grad.addColorStop(0.8, '#ff0'); // Yellow
+    grad.addColorStop(1, '#f00');   // Red (top)
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y + meterH - powerHeight, meterW, powerHeight);
+
+    // Border
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, meterW, meterH);
 }
