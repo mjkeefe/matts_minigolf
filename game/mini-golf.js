@@ -18,6 +18,12 @@ const MAX_STROKES = 10;
 const WALL_THICKNESS = 16;
 const BOUNCER_RADIUS = 28;
 const BOUNCER_COLORS = ['#FF5722', '#FF9800', '#E91E63', '#9C27B0', '#2196F3', '#00BCD4'];
+const RAMP_FORCE = 0.15;
+const MAX_BALL_SPEED = 24; // prevent tunneling and "disappearing" ball
+
+import { customHoles } from './courses/meadows/index.js';
+
+
 // Fade-in state
 let canvasAlpha = 1.0;
 let fadingIn = false;
@@ -35,6 +41,7 @@ let containerEl = null;
 let canvas = null;
 let ctx = null;
 let animationId = null;
+let isPaused = false;
 
 // Game flow state
 let holeCount = 0;   // 3, 9, or 18
@@ -103,6 +110,7 @@ function resetState() {
     aimCurrent = null;
     gameActive = false;
     holeComplete = false;
+    isPaused = false;
     stopLoop();
     clearTimeout(animTimeout);
     removeCanvasListeners();
@@ -129,10 +137,25 @@ function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTimestamp) / 16.67, 3);
     lastTimestamp = timestamp;
 
+    if (isPaused) {
+        render();
+        return;
+    }
+
     // Fade-in effect on new hole
     if (fadingIn) {
         canvasAlpha = Math.min(canvasAlpha + 0.08, 1.0);
         if (canvasAlpha >= 1.0) fadingIn = false;
+    }
+
+    // Always animate moving walls and rotating obstacles even when ball isn't moving
+    if (course && course.movingWalls) {
+        updateMovingWalls(dt);
+    }
+    if (course && course.rotatingObstacles) {
+        for (const ro of course.rotatingObstacles) {
+            ro.angle = (ro.angle || 0) + (ro.speed || 0.02) * dt;
+        }
     }
 
     if (!gameActive || holeComplete) {
@@ -153,9 +176,10 @@ function showTitleScreen() {
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-title-screen" class="mg-screen">
-                <h1 class="mg-main-title">MINI GOLF</h1>
-                <p class="mg-tagline">Putt your way to victory!</p>
-                <button class="mg-play-btn" id="mg-start-btn">PLAY NOW</button>
+                <div class="mg-logo-wrap">
+                    <img src="game/logo.png" alt="Matt's Minigolf" class="mg-main-logo">
+                </div>
+                <button class="mg-play-btn" id="mg-start-btn">PLAY</button>
             </div>
         </div>
     `;
@@ -172,34 +196,47 @@ function showTitleScreen() {
 function showSelectionScreen() {
     stopLoop();
     removeCanvasListeners();
+
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-selection">
-                <h1>⛳ Mini Golf</h1>
-                <p class="mg-subtitle">Customize your ball & choose course length</p>
-                <div class="mg-color-picker">
-                    <button class="mg-color-btn" data-color="#FFFFFF" style="background:#FFFFFF;"></button>
-                    <button class="mg-color-btn" data-color="#FF4136" style="background:#FF4136;"></button>
-                    <button class="mg-color-btn" data-color="#FF851B" style="background:#FF851B;"></button>
-                    <button class="mg-color-btn" data-color="#FFDC00" style="background:#FFDC00;"></button>
-                    <button class="mg-color-btn" data-color="#2ECC40" style="background:#2ECC40;"></button>
-                    <button class="mg-color-btn" data-color="#0074D9" style="background:#0074D9;"></button>
-                    <button class="mg-color-btn" data-color="#B10DC9" style="background:#B10DC9;"></button>
-                    <button class="mg-color-btn" data-color="#111111" style="background:#111111; border: 2px solid #555;"></button>
+                <h1>⛳ Select Your Course</h1>
+                <p class="mg-subtitle">Choose a course to begin your 18-hole journey</p>
+                
+                <div class="mg-course-grid">
+                    <div class="mg-course-card" id="mg-course-meadows">
+                        <div class="mg-course-image" style="background-image: url('game/meadows.png')"></div>
+                        <div class="mg-course-info">
+                            <span class="mg-course-tag">EASY</span>
+                            <h3>Minigolf Meadows</h3>
+                            <p>18 Holes • Par 54</p>
+                            <button class="mg-course-btn">PLAY COURSE</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mg-course-card locked">
+                        <div class="mg-course-image" style="background-image: linear-gradient(45deg, #333, #111)">
+                            <div class="mg-lock-icon">🔒</div>
+                        </div>
+                        <div class="mg-course-info">
+                            <span class="mg-course-tag">COMING SOON</span>
+                            <h3>Lava Lakes</h3>
+                            <p>Coming Soon</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="mg-hole-buttons">
-                    <button class="mg-hole-btn btn-3" id="mg-btn-3">
-                        <span class="mg-hole-number">3</span>
-                        <span class="mg-hole-label">Holes</span>
-                    </button>
-                    <button class="mg-hole-btn btn-9" id="mg-btn-9">
-                        <span class="mg-hole-number">9</span>
-                        <span class="mg-hole-label">Holes</span>
-                    </button>
-                    <button class="mg-hole-btn btn-18" id="mg-btn-18">
-                        <span class="mg-hole-number">18</span>
-                        <span class="mg-hole-label">Holes</span>
-                    </button>
+
+                <div class="mg-color-picker-wrap">
+                    <p>Customize Ball Color</p>
+                    <div class="mg-color-picker">
+                        <button class="mg-color-btn" data-color="#FFFFFF" style="background:#FFFFFF;"></button>
+                        <button class="mg-color-btn" data-color="#FF4136" style="background:#FF4136;"></button>
+                        <button class="mg-color-btn" data-color="#FF851B" style="background:#FF851B;"></button>
+                        <button class="mg-color-btn" data-color="#FFDC00" style="background:#FFDC00;"></button>
+                        <button class="mg-color-btn" data-color="#2ECC40" style="background:#2ECC40;"></button>
+                        <button class="mg-color-btn" data-color="#0074D9" style="background:#0074D9;"></button>
+                        <button class="mg-color-btn" data-color="#B10DC9" style="background:#B10DC9;"></button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -216,9 +253,33 @@ function showSelectionScreen() {
         });
     });
 
-    document.getElementById('mg-btn-3').addEventListener('click', () => startGame(3));
-    document.getElementById('mg-btn-9').addEventListener('click', () => startGame(9));
-    document.getElementById('mg-btn-18').addEventListener('click', () => startGame(18));
+    document.getElementById('mg-course-meadows').addEventListener('click', () => {
+        startGame(18); // Start full 18 holes
+    });
+}
+
+function loadCustomHole(holeNumber) {
+    const holeData = customHoles[holeNumber];
+    if (!holeData) {
+        playSound('boing');
+        const msgEl = document.getElementById('mg-selection-msg');
+        if (msgEl) {
+            msgEl.textContent = "Hole " + holeNumber + " not yet designed";
+            setTimeout(() => { msgEl.textContent = ""; }, 3000);
+        }
+        return;
+    }
+
+    // Set game state for testing specific hole
+    holeCount = 18;
+    currentHole = holeNumber;
+    strokesPerHole = []; // reset strokes since we're testing individually
+    holeStrokes = 0;
+    totalStrokes = 0;
+
+    buildGameDOM();
+    loadCourse(holeData);
+    startLoop();
 }
 
 // =====================================================
@@ -232,8 +293,11 @@ function startGame(holes) {
     totalStrokes = 0;
 
     buildGameDOM();
-    loadCourse(generateCourse());
-    startLoop();
+    const holeData = customHoles[currentHole];
+    if (holeData) {
+        loadCourse(holeData);
+        startLoop();
+    }
 }
 
 // =====================================================
@@ -253,6 +317,7 @@ function buildGameDOM() {
             </div>
         </div>
     `;
+    containerEl = document.getElementById('game-container'); // ensure ref
 
     canvas = document.getElementById('mg-canvas');
     ctx = canvas.getContext('2d');
@@ -273,6 +338,126 @@ function updateHUD() {
     if (elTotal) elTotal.textContent = holeCount;
     if (elStrokes) elStrokes.textContent = holeStrokes;
     if (elTotalS) elTotalS.textContent = totalStrokes;
+}
+
+// =====================================================
+//  Ball Management
+// =====================================================
+function resetBall() {
+    if (!course || !ball || holeComplete) return;
+
+    ball.x = course.tee.x;
+    ball.y = course.tee.y;
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.moving = false;
+    ball.angle = 0;
+
+    playSound('bounce');
+    updateHUD();
+    if (isPaused) resumeGame();
+}
+
+function checkBoundaries() {
+    if (!ball || !ball.moving) return;
+
+    // Radius buffer
+    const margin = BALL_RADIUS * 4;
+
+    // Check if way off canvas
+    if (ball.x < -margin || ball.x > CANVAS_W + margin ||
+        ball.y < -margin || ball.y > CANVAS_H + margin) {
+        resetBall();
+        return;
+    }
+
+    // Check if ball is on any floor
+    let onFloor = false;
+
+    // 1. Regular floors
+    if (course.floors) {
+        for (const f of course.floors) {
+            if (ball.x >= f.x && ball.x <= f.x + f.w &&
+                ball.y >= f.y && ball.y <= f.y + f.h) {
+                onFloor = true;
+                break;
+            }
+        }
+    }
+
+    // 2. Circular floors
+    if (!onFloor && course.floorCircles) {
+        for (const fc of course.floorCircles) {
+            const dist = Math.hypot(ball.x - fc.x, ball.y - fc.y);
+            // If it's a 'dark' circle (hole in floor), it's NOT floor
+            if (dist <= fc.r) {
+                if (fc.dark) {
+                    onFloor = false;
+                } else {
+                    onFloor = true;
+                }
+            }
+        }
+    }
+
+    // 3. Polygon floors
+    if (!onFloor && course.floorPolygons) {
+        // Simple point-in-polygon check or assumption it is on floor if not out of bounds
+        // For now, if we have polygons, we trust the wall collisions more or canvas bounds
+        onFloor = true;
+    }
+
+    // If we have floors defined but ball isn't on any of them, reset
+    const hasDefinedFloors = (course.floors && course.floors.length > 0) ||
+        (course.floorCircles && course.floorCircles.length > 0);
+
+    if (hasDefinedFloors && !onFloor) {
+        // Add a small delay/grace period if needed, or just reset
+        resetBall();
+    }
+}
+
+// =====================================================
+//  Escape Menu & Pause Logic
+// =====================================================
+function toggleEscapeMenu() {
+    if (holeComplete) return;
+    if (isPaused) {
+        resumeGame();
+    } else {
+        pauseGame();
+    }
+}
+
+function pauseGame() {
+    isPaused = true;
+    showEscapeMenu();
+}
+
+function resumeGame() {
+    isPaused = false;
+    const overlay = document.getElementById('mg-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function showEscapeMenu() {
+    showOverlay(`
+        <div id="mg-escape-menu">
+            <h2>⏸️ Paused</h2>
+            <div class="mg-menu-options">
+                <button class="mg-menu-btn" id="mg-resume-btn">Resume</button>
+                <button class="mg-menu-btn" id="mg-reset-ball-btn">Reset Ball</button>
+                <button class="mg-menu-btn" id="mg-title-btn">Title Screen</button>
+            </div>
+        </div>
+    `);
+
+    document.getElementById('mg-resume-btn').addEventListener('click', resumeGame);
+    document.getElementById('mg-reset-ball-btn').addEventListener('click', resetBall);
+    document.getElementById('mg-title-btn').addEventListener('click', () => {
+        cleanup();
+        init();
+    });
 }
 
 // =====================================================
@@ -309,6 +494,7 @@ function loadCourse(c) {
 //  Update (Physics)
 // =====================================================
 function update(dt) {
+    if (isPaused) return;
     if (!ball || !ball.moving) return;
 
     // Apply velocity
@@ -331,14 +517,90 @@ function update(dt) {
         ball.moving = false;
     }
 
+    // Clamp speed to prevent tunneling
+    const spd = Math.hypot(ball.vx, ball.vy);
+    if (spd > MAX_BALL_SPEED) {
+        ball.vx = (ball.vx / spd) * MAX_BALL_SPEED;
+        ball.vy = (ball.vy / spd) * MAX_BALL_SPEED;
+    }
+
+    // Rotating obstacle collision — CHECK FIRST so wall collision can catch accidental tunneling push
+    if (course.rotatingObstacles) {
+        for (const ro of course.rotatingObstacles) {
+            const arms = ro.arms || 4;
+            const speed = ro.speed || 0.02;
+            for (let i = 0; i < arms; i++) {
+                const a = (ro.angle || 0) + (i * Math.PI * 2 / arms);
+                const x2 = ro.cx + Math.cos(a) * ro.length;
+                const y2 = ro.cy + Math.sin(a) * ro.length;
+
+                const dx = ball.x - ro.cx;
+                const dy = ball.y - ro.cy;
+                const dist = Math.hypot(dx, dy);
+
+                const pushMag = speed * dist * 1.5;
+                const pushX = -Math.sin(a) * pushMag;
+                const pushY = Math.cos(a) * pushMag;
+
+                const line = {
+                    x1: ro.cx,
+                    y1: ro.cy,
+                    x2: x2,
+                    y2: y2,
+                    thickness: ro.width || 14
+                };
+                resolveCircleLine(ball, line, pushX, pushY);
+            }
+        }
+    }
+
     // Wall collision
     handleWallCollisions();
+
+    // Moving wall collision
+    if (course.movingWalls) {
+        for (const mw of course.movingWalls) {
+            resolveCircleRect(ball, mw);
+        }
+    }
 
     // Bouncer collision
     handleBouncerCollisions();
 
+    // Ramp boost
+    if (course.ramps) {
+        for (const r of course.ramps) {
+            if (ball.x >= r.x && ball.x <= r.x + r.w &&
+                ball.y >= r.y && ball.y <= r.y + r.h) {
+                ball.vx += (r.forceX || 0) * RAMP_FORCE * dt;
+                ball.vy += (r.forceY || 0) * RAMP_FORCE * dt;
+            }
+        }
+    }
+
     // Hole detection
     handleHoleDetection();
+
+    // Boundary/Fly-off check
+    checkBoundaries();
+}
+
+// =====================================================
+//  Moving Walls
+// =====================================================
+function updateMovingWalls(dt) {
+    if (!course || !course.movingWalls) return;
+    for (const mw of course.movingWalls) {
+        if (mw.axis === 'x') {
+            mw.x += mw.speed * mw.dir * dt;
+            if (mw.x <= mw.min) { mw.x = mw.min; mw.dir = 1; }
+            if (mw.x + mw.w >= mw.max + mw.w) { mw.x = mw.max; mw.dir = -1; }
+        } else if (mw.axis === 'y') {
+            mw.y += mw.speed * mw.dir * dt;
+            if (mw.y <= mw.min) { mw.y = mw.min; mw.dir = 1; }
+            if (mw.y + mw.h >= mw.max + mw.h) { mw.y = mw.max; mw.dir = -1; }
+        }
+    }
 }
 
 // =====================================================
@@ -350,6 +612,70 @@ function handleWallCollisions() {
     const allWalls = [...course.outerWalls, ...course.obstacleWalls];
     for (const wall of allWalls) {
         resolveCircleRect(ball, wall);
+    }
+
+    if (course.angledWalls) {
+        for (const wall of course.angledWalls) {
+            resolveCircleLine(ball, wall);
+        }
+    }
+}
+
+function resolveCircleLine(b, line, vPushX = 0, vPushY = 0) {
+    const dx = line.x2 - line.x1;
+    const dy = line.y2 - line.y1;
+    const len = Math.hypot(dx, dy);
+
+    if (len === 0) return;
+
+    const toBallX = b.x - line.x1;
+    const toBallY = b.y - line.y1;
+
+    let nx = -dy / len;
+    let ny = dx / len;
+
+    if (toBallX * nx + toBallY * ny < 0) {
+        nx = -nx;
+        ny = -ny;
+    }
+
+    const dotLine = toBallX * (dx / len) + toBallY * (dy / len);
+    const proj = Math.max(0, Math.min(len, dotLine));
+
+    const nearX = line.x1 + proj * (dx / len);
+    const nearY = line.y1 + proj * (dy / len);
+
+    const distSq = (b.x - nearX) * (b.x - nearX) + (b.y - nearY) * (b.y - nearY);
+    const halfThick = (line.thickness || WALL_THICKNESS) / 2;
+    const minD = BALL_RADIUS + halfThick;
+
+    if (distSq < minD * minD && distSq > 0) {
+        const dist = Math.sqrt(distSq);
+        const overlap = minD - dist;
+
+        const pushX = (b.x - nearX) / dist;
+        const pushY = (b.y - nearY) / dist;
+
+        b.x += pushX * (overlap + 1.2);
+        b.y += pushY * (overlap + 1.2);
+
+        const dot = b.vx * pushX + b.vy * pushY;
+        if (dot < 0) {
+            b.vx -= 2 * dot * pushX;
+            b.vy -= 2 * dot * pushY;
+
+            // Apply extra sweep push from rotation
+            b.vx += vPushX;
+            b.vy += vPushY;
+
+            b.vx *= 0.88;
+            b.vy *= 0.88;
+            playSound('bounce');
+        } else {
+            // Even if already moving away, the sweep can still catch it
+            b.vx += vPushX * 0.5;
+            b.vy += vPushY * 0.5;
+        }
     }
 }
 
@@ -391,8 +717,8 @@ function resolveCircleRect(b, wall) {
     const nx = dx / dist;
     const ny = dy / dist;
 
-    b.x += nx * (overlap + 0.5);
-    b.y += ny * (overlap + 0.5);
+    b.x += nx * (overlap + 1.2);
+    b.y += ny * (overlap + 1.2);
 
     // Reflect velocity
     const dot = b.vx * nx + b.vy * ny;
@@ -438,6 +764,13 @@ function handleBouncerCollisions() {
             } else {
                 ball.vx = nx * boost;
                 ball.vy = ny * boost;
+            }
+
+            // Cap impulse to prevent tunneling
+            const finalSpd = Math.hypot(ball.vx, ball.vy);
+            if (finalSpd > MAX_BALL_SPEED * 1.5) {
+                ball.vx = (ball.vx / finalSpd) * MAX_BALL_SPEED * 1.5;
+                ball.vy = (ball.vy / finalSpd) * MAX_BALL_SPEED * 1.5;
             }
 
             playSound('boing');
@@ -492,6 +825,7 @@ function attachCanvasListeners() {
     // mousemove + mouseup on WINDOW so dragging outside the canvas works
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('keydown', onKeyDown);
 }
 
 function removeCanvasListeners() {
@@ -499,6 +833,13 @@ function removeCanvasListeners() {
     canvas.removeEventListener('mousedown', onMouseDown);
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
+    window.removeEventListener('keydown', onKeyDown);
+}
+
+function onKeyDown(e) {
+    if (e.key === 'Escape') {
+        toggleEscapeMenu();
+    }
 }
 
 function getCanvasPos(e) {
@@ -616,7 +957,12 @@ function showHoleCompleteOverlay() {
 
 function advanceToNextHole() {
     currentHole++;
-    loadCourse(generateCourse());
+    const holeData = customHoles[currentHole];
+    if (holeData) {
+        loadCourse(holeData);
+    } else {
+        showScorecard();
+    }
     updateHUD();
 }
 
@@ -678,160 +1024,11 @@ function showOverlay(html) {
 
 // =====================================================
 //  Course Generation (Stage 2: Placeholder returning a simple test course)
-//  (Will be replaced with full procedural generation in Stage 8)
-// =====================================================
-function generateCourse() {
-    const W = CANVAS_W;
-    const H = CANVAS_H;
-    const T = WALL_THICKNESS;
-    const inner = { x: T, y: T, w: W - T * 2, h: H - T * 2 };
-
-    // Outer walls: top, bottom, left, right
-    const outerWalls = [
-        { x: 0, y: 0, w: W, h: T }, // top
-        { x: 0, y: H - T, w: W, h: T }, // bottom
-        { x: 0, y: 0, w: T, h: H }, // left
-        { x: W - T, y: 0, w: T, h: H }, // right
-    ];
-
-    // Pick a random layout style for variety
-    const layout = Math.floor(Math.random() * 4);
-    let tee, hole;
-
-    switch (layout) {
-        case 0: // Diagonal: bottom-left → top-right
-            tee = { x: T + 50 + Math.random() * 80, y: H - T - 50 - Math.random() * 80 };
-            hole = { x: W - T - 50 - Math.random() * 80, y: T + 50 + Math.random() * 80 };
-            break;
-        case 1: // Anti-diagonal: top-left → bottom-right
-            tee = { x: T + 50 + Math.random() * 80, y: T + 50 + Math.random() * 80 };
-            hole = { x: W - T - 50 - Math.random() * 80, y: H - T - 50 - Math.random() * 80 };
-            break;
-        case 2: // Horizontal dogleg: left-center → right-center
-            tee = { x: T + 50 + Math.random() * 60, y: H / 2 + (Math.random() - 0.5) * 140 };
-            hole = { x: W - T - 50 - Math.random() * 60, y: H / 2 + (Math.random() - 0.5) * 140 };
-            break;
-        case 3: // Vertical dogleg: top-center → bottom-center
-            tee = { x: W / 2 + (Math.random() - 0.5) * 180, y: T + 50 + Math.random() * 60 };
-            hole = { x: W / 2 + (Math.random() - 0.5) * 180, y: H - T - 50 - Math.random() * 60 };
-            break;
-        default:
-            tee = { x: T + 80, y: H - T - 80 };
-            hole = { x: W - T - 80, y: T + 80 };
-    }
-
-    // Clamp to playable area
-    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-    const pad = BALL_RADIUS + 10;
-    tee.x = clamp(tee.x, T + pad, W - T - pad);
-    tee.y = clamp(tee.y, T + pad, H - T - pad);
-    hole.x = clamp(hole.x, T + pad, W - T - pad);
-    hole.y = clamp(hole.y, T + pad, H - T - pad);
-
-    // 1-2 obstacle walls
-    const obstacleWalls = generateObstacleWalls(tee, hole, W, H, T);
-
-    // 1-3 circle bouncers
-    const bouncers = generateBouncers(tee, hole, W, H, T, obstacleWalls);
-
-    return { tee, hole, outerWalls, obstacleWalls, bouncers };
-}
-
-function generateObstacleWalls(tee, hole, W, H, T) {
-    const count = 2 + Math.floor(Math.random() * 3); // 2 to 4 obstacles for extra difficulty
-    const walls = [];
-    const margin = T + 40;
-    const attempts = 50;
-
-    for (let i = 0; i < count; i++) {
-        for (let a = 0; a < attempts; a++) {
-            const isHorz = Math.random() > 0.5;
-            const ww = isHorz ? 80 + Math.random() * 120 : 16 + Math.random() * 20;
-            const wh = isHorz ? 16 + Math.random() * 20 : 80 + Math.random() * 120;
-            const wx = margin + Math.random() * (W - margin * 2 - ww);
-            const wy = margin + Math.random() * (H - margin * 2 - wh);
-
-            const wall = { x: wx, y: wy, w: ww, h: wh };
-
-            // Don't block tee or hole directly
-            if (circleOverlapsRect(tee, 40, wall)) continue;
-            if (circleOverlapsRect(hole, 40, wall)) continue;
-
-            // Don't overlap with previously placed obstacle walls
-            let overlapsWall = false;
-            for (const w of walls) {
-                if (
-                    wall.x < w.x + w.w + 15 &&
-                    wall.x + wall.w + 15 > w.x &&
-                    wall.y < w.y + w.h + 15 &&
-                    wall.y + wall.h + 15 > w.y
-                ) {
-                    overlapsWall = true;
-                    break;
-                }
-            }
-            if (overlapsWall) continue;
-
-            walls.push(wall);
-            break;
-        }
-    }
-    return walls;
-}
-
-function generateBouncers(tee, hole, W, H, T, obstacleWalls) {
-    const count = 1 + Math.floor(Math.random() * 3); // 1, 2, or 3 bouncers
-    const bouncers = [];
-    const margin = T + BOUNCER_RADIUS + 30;
-    const colorPool = [...BOUNCER_COLORS];
-
-    for (let i = 0; i < count; i++) {
-        for (let a = 0; a < 40; a++) {
-            const bx = margin + Math.random() * (W - margin * 2);
-            const by = margin + Math.random() * (H - margin * 2);
-            const r = BOUNCER_RADIUS;
-            const color = colorPool[Math.floor(Math.random() * colorPool.length)];
-
-            // Keep clear of tee and hole
-            if (Math.hypot(bx - tee.x, by - tee.y) < r + 50) continue;
-            if (Math.hypot(bx - hole.x, by - hole.y) < r + 50) continue;
-
-            // Keep clear of existing bouncers
-            const tooClose = bouncers.some(b => Math.hypot(bx - b.x, by - b.y) < r * 3);
-            if (tooClose) continue;
-
-            // Keep clear of obstacle walls
-            let hitsWall = false;
-            if (obstacleWalls) {
-                for (const w of obstacleWalls) {
-                    if (circleOverlapsRect({ x: bx, y: by }, r + 15, w)) {
-                        hitsWall = true;
-                        break;
-                    }
-                }
-            }
-            if (hitsWall) continue;
-
-            bouncers.push({ x: bx, y: by, r, color });
-            break;
-        }
-    }
-    return bouncers;
-}
-
-function circleOverlapsRect(circle, radius, rect) {
-    const nearX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
-    const nearY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
-    const dx = circle.x - nearX;
-    const dy = circle.y - nearY;
-    return (dx * dx + dy * dy) < (radius * radius);
-}
-
 // =====================================================
 //  Rendering
 // =====================================================
 function render() {
-    if (!ctx) return;
+    if (!ctx || !canvas) return;
 
     ctx.save();
     ctx.globalAlpha = canvasAlpha;
@@ -840,18 +1037,75 @@ function render() {
 
     if (!course) { ctx.restore(); return; }
 
-    // Green background
-    ctx.fillStyle = '#2E7D32';
+    // Use dark background
+    ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    // Subtle mowing-stripe texture (alternating lighter strips)
-    for (let i = 0; i < CANVAS_W; i += 40) {
-        ctx.fillStyle = (Math.floor(i / 40) % 2 === 0)
-            ? 'rgba(255,255,255,0.025)'
-            : 'rgba(0,0,0,0.025)';
-        ctx.fillRect(i, 0, 20, CANVAS_H);
+    // If custom floors exist, draw those in green
+    if (course.floors && course.floors.length > 0) {
+        ctx.fillStyle = '#2E7D32';
+        for (const f of course.floors) {
+            ctx.fillRect(f.x, f.y, f.w, f.h);
+        }
+
+        // Clip the subtle pattern
+        ctx.save();
+        ctx.beginPath();
+        for (const f of course.floors) {
+            ctx.rect(f.x, f.y, f.w, f.h);
+        }
     }
 
+    // Floor polygons (for complex slanted shapes)
+    if (course.floorPolygons) {
+        for (const fp of course.floorPolygons) {
+            ctx.fillStyle = fp.color || '#2E7D32';
+            ctx.beginPath();
+            if (fp.points && fp.points.length > 0) {
+                ctx.moveTo(fp.points[0].x, fp.points[0].y);
+                for (let i = 1; i < fp.points.length; i++) {
+                    ctx.lineTo(fp.points[i].x, fp.points[i].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+
+    if (course.floors && course.floors.length > 0) {
+        ctx.clip();
+
+        for (let i = 0; i < CANVAS_W; i += 40) {
+            ctx.fillStyle = (Math.floor(i / 40) % 2 === 0)
+                ? 'rgba(255,255,255,0.025)'
+                : 'rgba(0,0,0,0.025)';
+            ctx.fillRect(i, 0, 20, CANVAS_H);
+        }
+        ctx.restore();
+    } else if (!course.floorCircles || course.floorCircles.length === 0) {
+        // Fallback backward-compatible full green screen (only if no circular floors)
+        ctx.fillStyle = '#2E7D32';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        for (let i = 0; i < CANVAS_W; i += 40) {
+            ctx.fillStyle = (Math.floor(i / 40) % 2 === 0)
+                ? 'rgba(255,255,255,0.025)'
+                : 'rgba(0,0,0,0.025)';
+            ctx.fillRect(i, 0, 20, CANVAS_H);
+        }
+    }
+
+    // Floor circles (for donut/circular courses)
+    if (course.floorCircles) {
+        for (const fc of course.floorCircles) {
+            ctx.fillStyle = fc.dark ? '#1a1a2e' : '#2E7D32';
+            ctx.beginPath();
+            ctx.arc(fc.x, fc.y, fc.r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    drawRamps();
+    drawRotatingObstacles();
     drawBouncers();
     drawHole();
     drawTee();
@@ -883,6 +1137,155 @@ function drawWalls() {
         ctx.fillStyle = 'rgba(0,0,0,0.15)';
         ctx.fillRect(w.x, w.y + w.h - 3, w.w, 3);
         ctx.fillRect(w.x + w.w - 3, w.y, 3, w.h);
+    }
+
+    if (course.angledWalls) {
+        ctx.lineCap = 'round';
+        for (const w of course.angledWalls) {
+            ctx.lineWidth = w.thickness || WALL_THICKNESS;
+
+            // Setup shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.35)'; // depth shadow
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+
+            // Main white line
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.moveTo(w.x1, w.y1);
+            ctx.lineTo(w.x2, w.y2);
+            ctx.stroke();
+
+            // Clear shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            // Highlight
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(w.x1 - 2, w.y1 - 2);
+            ctx.lineTo(w.x2 - 2, w.y2 - 2);
+            ctx.stroke();
+        }
+    }
+
+    // Moving walls — draw with a distinct red/orange "pong paddle" look
+    if (course.movingWalls) {
+        for (const w of course.movingWalls) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.35)';
+            ctx.fillRect(w.x + 3, w.y + 3, w.w, w.h);
+
+            // Red-orange gradient body
+            const grad = ctx.createLinearGradient(w.x, w.y, w.x, w.y + w.h);
+            grad.addColorStop(0, '#FF5722');
+            grad.addColorStop(1, '#E64A19');
+            ctx.fillStyle = grad;
+            ctx.fillRect(w.x, w.y, w.w, w.h);
+
+            // Top highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.fillRect(w.x, w.y, w.w, 3);
+            ctx.fillRect(w.x, w.y, 3, w.h);
+
+            // Bottom shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(w.x, w.y + w.h - 3, w.w, 3);
+            ctx.fillRect(w.x + w.w - 3, w.y, 3, w.h);
+        }
+    }
+}
+
+function drawRotatingObstacles() {
+    if (!course || !course.rotatingObstacles) return;
+    for (const ro of course.rotatingObstacles) {
+        const arms = ro.arms || 4;
+        const width = ro.width || 14;
+
+        for (let i = 0; i < arms; i++) {
+            const a = (ro.angle || 0) + (i * Math.PI * 2 / arms);
+            const x2 = ro.cx + Math.cos(a) * ro.length;
+            const y2 = ro.cy + Math.sin(a) * ro.length;
+
+            // Shadow
+            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctx.lineWidth = width;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(ro.cx + 3, ro.cy + 3);
+            ctx.lineTo(x2 + 3, y2 + 3);
+            ctx.stroke();
+
+            // Blade
+            const grad = ctx.createLinearGradient(ro.cx, ro.cy, x2, y2);
+            grad.addColorStop(0, '#FFFFFF');
+            grad.addColorStop(1, '#DDDDDD');
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = width;
+            ctx.beginPath();
+            ctx.moveTo(ro.cx, ro.cy);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+
+            // Highlight
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(ro.cx, ro.cy);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
+        }
+
+        // Center pivot
+        ctx.fillStyle = '#FF5722';
+        ctx.beginPath();
+        ctx.arc(ro.cx, ro.cy, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+}
+
+function drawRamps() {
+    if (!course || !course.ramps || course.ramps.length === 0) return;
+    for (const r of course.ramps) {
+        // Ramp background
+        ctx.fillStyle = 'rgba(0, 200, 255, 0.25)';
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.strokeStyle = 'rgba(0, 200, 255, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+        // Arrow
+        const cx = r.x + r.w / 2;
+        const cy = r.y + r.h / 2;
+        const fx = r.forceX || 0;
+        const fy = r.forceY || 0;
+        const fLen = Math.hypot(fx, fy);
+        if (fLen === 0) continue;
+        const ax = (fx / fLen) * 15;
+        const ay = (fy / fLen) * 15;
+
+        ctx.strokeStyle = 'rgba(0, 220, 255, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - ax, cy - ay);
+        ctx.lineTo(cx + ax, cy + ay);
+        ctx.stroke();
+        // Arrowhead
+        const headLen = 6;
+        const angle = Math.atan2(ay, ax);
+        ctx.beginPath();
+        ctx.moveTo(cx + ax, cy + ay);
+        ctx.lineTo(cx + ax - headLen * Math.cos(angle - 0.5), cy + ay - headLen * Math.sin(angle - 0.5));
+        ctx.moveTo(cx + ax, cy + ay);
+        ctx.lineTo(cx + ax - headLen * Math.cos(angle + 0.5), cy + ay - headLen * Math.sin(angle + 0.5));
+        ctx.stroke();
     }
 }
 
@@ -964,22 +1367,19 @@ function drawHole() {
 
 function drawTee() {
     const { x, y } = course.tee;
+    const w = 32;
+    const h = 48;
 
-    // Tee marker (yellow circle)
-    ctx.fillStyle = '#FFD700';
-    ctx.strokeStyle = '#FFA000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // Tee marker (light gray rectangle)
+    ctx.fillStyle = '#CCCCCC';
+    ctx.strokeStyle = '#AAAAAA';
+    ctx.lineWidth = 1;
+    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    ctx.strokeRect(x - w / 2, y - h / 2, w, h);
 
-    // "T" label
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 8px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('T', x, y);
+    // Subtle texture for tee
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(x - w / 2 + 4, y - h / 2 + 4, w - 8, h - 8);
 }
 
 function drawBall() {

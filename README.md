@@ -1,27 +1,62 @@
-# Mini Golf
+# ⛳ Matt's Minigolf
 
-A fun, browser-based standalone mini golf game with randomly generated courses, physics, and leaderboards.
+A premium, full-featured 18-hole mini-golf experience built with modern web technologies. Focus on high-fidelity aesthetics, custom physics, and modular course design.
 
-## Features
-- **3 Game Modes**: Play 3, 9, or 18 holes.
-- **Procedurally Generated Courses**: Every game is different with random hole placements, obstacles, and bouncers.
-- **Physics Engine**: Realistic bouncing, friction, and pinball-style bouncers.
-- **Local Leaderboards**: Compete for the lowest score in each standard game mode.
-- **Customization**: Choose your ball color before teeing off.
+![Matt's Minigolf](game/logo.png)
 
-## How to Play
-1. Open `index.html` in your web browser.
-2. Click **PLAY NOW**.
-3. Choose a ball color and select a game length (3, 9, or 18 holes).
-4. Click and drag away from the ball to aim and set your power (like a slingshot).
-5. Release to putt. Try to get the ball in the hole in as few strokes as possible!
-6. Each hole has a maximum limit of 10 strokes.
+## 🚀 Features
 
-## Technologies Used
-- HTML5 Canvas
-- Vanilla JavaScript (ES6 Modules)
-- CSS3
-- Web Audio API
+- **Standard 18-Hole Course**: Play through the full "Minigolf Meadows" course with a target par of 54.
+- **Custom Physics Engine**: Responsive ball physics including:
+    - **Friction & Momentum**: Realistic roll and stop mechanics.
+    - **Collision Detection**: Advanced Circle-Rect and Circle-Line collision handling.
+    - **Dynamic Obstacles**: Windmills (rotating), moving walls, bouncers, and boost ramps.
+- **Modular Level System**: Every hole is defined in its own file (under `game/holes/`), making it simple to add or modify courses.
+- **Safety & Stability**: 
+    - **Impulse Capping**: Prevents ball tunneling through walls during high-speed collisions.
+    - **Automatic Out-of-Bounds Detection**: Automatically resets the ball to the tee if it escapes the course.
+- **Premium UI**: 
+    - Stunning "Selection Screen" with course tiles and animated cards.
+    - Glassmorphism overlay for the **ESC Pause Menu**.
+    - Fully customizable ball colors.
 
-## Architecture
-Extracted from a larger multi-game platform into a self-contained web app. All rendering is performed manually on an HTML5 `<canvas>` element using requestAnimationFrame for the game loop. No external libraries or engines are used.
+## 🕹️ Controls
+
+- **Aim & Shoot**: Click and drag away from the ball to set power and direction. Release to putt.
+- **Pause Menu**: Press `ESC` during play to pause, reset the ball, or return to the main menu.
+- **Navigation**: Use the mouse to navigate menus and select courses.
+
+## 📁 Repository Structure
+
+```text
+/
+├── index.html        # Entry point
+├── styles.css        # Global premium UI styles
+├── game/
+│   ├── mini-golf.js  # Main game engine & physics
+│   ├── logo.png      # Branding asset
+│   ├── meadows.png   # Course preview asset
+│   └── courses/      # Course-based organization
+│       └── meadows/  # "Minigolf Meadows" course
+│           ├── index.js  # Hole registry for this course
+│           ├── utils.js  # Shared geometry helpers
+│           └── hole1.js - hole18.js # Individual hole data
+└── main.js           # Bootstrapper
+```
+
+## 🛠️ Technology Stack
+
+- **Core**: Vanilla JavaScript (ES6+ Modules)
+- **Rendering**: HTML5 Canvas API
+- **Styling**: Modern Vanilla CSS (Flexbox, CSS Grid, Glassmorphism, Keyframe Animations)
+- **Fonts**: Google Fonts (Outfit, Inter)
+
+## 🏗️ Adding New Holes
+
+Adding a hole is simple thanks to the modular architecture:
+1. Create a new file in `game/courses/meadows/` (e.g., `hole19.js`).
+2. Export a configuration object defining walls, obstacles, tee, and hole positions.
+3. Register the new hole in `game/courses/meadows/index.js`.
+
+---
+*Created by Matt. Experience the ultimate putting adventure!*

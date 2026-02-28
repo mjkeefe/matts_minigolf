@@ -76,8 +76,15 @@
 
 .mg-hole-buttons {
     display: flex;
-    gap: 24px;
+    gap: 12px;
     align-items: center;
+}
+
+.mg-hole-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 12px;
 }
 
 .mg-hole-btn {
@@ -85,62 +92,37 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 160px;
-    height: 160px;
-    border-radius: 20px;
-    border: 3px solid transparent;
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    border: 2px solid transparent;
     cursor: pointer;
     font-family: inherit;
     font-weight: 900;
     transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
     position: relative;
     overflow: hidden;
+    background: linear-gradient(135deg, #1a4a8a, #2980b9);
+    border-color: #3498db;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+    color: white;
 }
 
 .mg-hole-btn .mg-hole-number {
-    font-size: 3.5em;
+    font-size: 1.5em;
     line-height: 1;
 }
 
 .mg-hole-btn .mg-hole-label {
-    font-size: 1.1em;
-    margin-top: 6px;
-    letter-spacing: 1px;
+    font-size: 0.6em;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
-.mg-hole-btn.btn-3 {
-    background: linear-gradient(135deg, #1a6b3c, #27ae60);
-    border-color: #2ecc71;
-    box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
-    color: white;
-}
-
-.mg-hole-btn.btn-9 {
-    background: linear-gradient(135deg, #1a4a8a, #2980b9);
-    border-color: #3498db;
-    box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
-    color: white;
-}
-
-.mg-hole-btn.btn-18 {
-    background: linear-gradient(135deg, #6b1a7a, #8e44ad);
-    border-color: #9b59b6;
-    box-shadow: 0 0 20px rgba(155, 89, 182, 0.3);
-    color: white;
-}
-
 .mg-hole-btn:hover {
-    transform: translateY(-8px) scale(1.05);
-}
-
-.mg-hole-btn.btn-3:hover {
-    box-shadow: 0 12px 40px rgba(46, 204, 113, 0.6);
-    border-color: #2ecc71;
-}
-
-.mg-hole-btn.btn-9:hover {
-    box-shadow: 0 12px 40px rgba(52, 152, 219, 0.6);
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
     border-color: #3498db;
 }
 
