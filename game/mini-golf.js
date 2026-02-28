@@ -41,6 +41,7 @@ let containerEl = null;
 let canvas = null;
 let ctx = null;
 let animationId = null;
+let isPaused = false;
 
 // Game flow state
 let holeCount = 0;   // 3, 9, or 18
@@ -109,6 +110,7 @@ function resetState() {
     aimCurrent = null;
     gameActive = false;
     holeComplete = false;
+    isPaused = false;
     stopLoop();
     clearTimeout(animTimeout);
     removeCanvasListeners();
@@ -134,6 +136,11 @@ function gameLoop(timestamp) {
     animationId = requestAnimationFrame(gameLoop);
     const dt = Math.min((timestamp - lastTimestamp) / 16.67, 3);
     lastTimestamp = timestamp;
+
+    if (isPaused) {
+        render();
+        return;
+    }
 
     // Fade-in effect on new hole
     if (fadingIn) {
@@ -169,9 +176,10 @@ function showTitleScreen() {
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-title-screen" class="mg-screen">
-                <h1 class="mg-main-title">MINI GOLF</h1>
-                <p class="mg-tagline">Putt your way to victory!</p>
-                <button class="mg-play-btn" id="mg-start-btn">PLAY NOW</button>
+                <div class="mg-logo-wrap">
+                    <img src="game/logo.png" alt="Matt's Minigolf" class="mg-main-logo">
+                </div>
+                <button class="mg-play-btn" id="mg-start-btn">PLAY</button>
             </div>
         </div>
     `;
@@ -189,35 +197,47 @@ function showSelectionScreen() {
     stopLoop();
     removeCanvasListeners();
 
-    let buttonsHTML = '';
-    for (let i = 1; i <= 18; i++) {
-        buttonsHTML += `
-            <button class="mg-hole-btn" data-hole="${i}">
-                <span class="mg-hole-number">${i}</span>
-                <span class="mg-hole-label">Hole</span>
-            </button>
-        `;
-    }
-
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-selection">
-                <h1>⛳ Select Hole to Test</h1>
-                <p class="mg-subtitle">Customize your ball & jump to a hole</p>
-                <div class="mg-color-picker">
-                    <button class="mg-color-btn" data-color="#FFFFFF" style="background:#FFFFFF;"></button>
-                    <button class="mg-color-btn" data-color="#FF4136" style="background:#FF4136;"></button>
-                    <button class="mg-color-btn" data-color="#FF851B" style="background:#FF851B;"></button>
-                    <button class="mg-color-btn" data-color="#FFDC00" style="background:#FFDC00;"></button>
-                    <button class="mg-color-btn" data-color="#2ECC40" style="background:#2ECC40;"></button>
-                    <button class="mg-color-btn" data-color="#0074D9" style="background:#0074D9;"></button>
-                    <button class="mg-color-btn" data-color="#B10DC9" style="background:#B10DC9;"></button>
-                    <button class="mg-color-btn" data-color="#111111" style="background:#111111; border: 2px solid #555;"></button>
+                <h1>⛳ Select Your Course</h1>
+                <p class="mg-subtitle">Choose a course to begin your 18-hole journey</p>
+                
+                <div class="mg-course-grid">
+                    <div class="mg-course-card" id="mg-course-meadows">
+                        <div class="mg-course-image" style="background-image: url('game/meadows.png')"></div>
+                        <div class="mg-course-info">
+                            <span class="mg-course-tag">EASY</span>
+                            <h3>Minigolf Meadows</h3>
+                            <p>18 Holes • Par 54</p>
+                            <button class="mg-course-btn">PLAY COURSE</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mg-course-card locked">
+                        <div class="mg-course-image" style="background-image: linear-gradient(45deg, #333, #111)">
+                            <div class="mg-lock-icon">🔒</div>
+                        </div>
+                        <div class="mg-course-info">
+                            <span class="mg-course-tag">COMING SOON</span>
+                            <h3>Lava Lakes</h3>
+                            <p>Coming Soon</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="mg-hole-buttons mg-hole-grid">
-                    ${buttonsHTML}
+
+                <div class="mg-color-picker-wrap">
+                    <p>Customize Ball Color</p>
+                    <div class="mg-color-picker">
+                        <button class="mg-color-btn" data-color="#FFFFFF" style="background:#FFFFFF;"></button>
+                        <button class="mg-color-btn" data-color="#FF4136" style="background:#FF4136;"></button>
+                        <button class="mg-color-btn" data-color="#FF851B" style="background:#FF851B;"></button>
+                        <button class="mg-color-btn" data-color="#FFDC00" style="background:#FFDC00;"></button>
+                        <button class="mg-color-btn" data-color="#2ECC40" style="background:#2ECC40;"></button>
+                        <button class="mg-color-btn" data-color="#0074D9" style="background:#0074D9;"></button>
+                        <button class="mg-color-btn" data-color="#B10DC9" style="background:#B10DC9;"></button>
+                    </div>
                 </div>
-                <div id="mg-selection-msg" style="color: #ff5722; margin-top: 15px; font-weight: bold; min-height: 24px;"></div>
             </div>
         </div>
     `;
@@ -233,11 +253,8 @@ function showSelectionScreen() {
         });
     });
 
-    document.querySelectorAll('.mg-hole-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const holeNumber = parseInt(e.currentTarget.dataset.hole, 10);
-            loadCustomHole(holeNumber);
-        });
+    document.getElementById('mg-course-meadows').addEventListener('click', () => {
+        startGame(18); // Start full 18 holes
     });
 }
 
@@ -300,6 +317,7 @@ function buildGameDOM() {
             </div>
         </div>
     `;
+    containerEl = document.getElementById('game-container'); // ensure ref
 
     canvas = document.getElementById('mg-canvas');
     ctx = canvas.getContext('2d');
@@ -320,6 +338,126 @@ function updateHUD() {
     if (elTotal) elTotal.textContent = holeCount;
     if (elStrokes) elStrokes.textContent = holeStrokes;
     if (elTotalS) elTotalS.textContent = totalStrokes;
+}
+
+// =====================================================
+//  Ball Management
+// =====================================================
+function resetBall() {
+    if (!course || !ball || holeComplete) return;
+
+    ball.x = course.tee.x;
+    ball.y = course.tee.y;
+    ball.vx = 0;
+    ball.vy = 0;
+    ball.moving = false;
+    ball.angle = 0;
+
+    playSound('bounce');
+    updateHUD();
+    if (isPaused) resumeGame();
+}
+
+function checkBoundaries() {
+    if (!ball || !ball.moving) return;
+
+    // Radius buffer
+    const margin = BALL_RADIUS * 4;
+
+    // Check if way off canvas
+    if (ball.x < -margin || ball.x > CANVAS_W + margin ||
+        ball.y < -margin || ball.y > CANVAS_H + margin) {
+        resetBall();
+        return;
+    }
+
+    // Check if ball is on any floor
+    let onFloor = false;
+
+    // 1. Regular floors
+    if (course.floors) {
+        for (const f of course.floors) {
+            if (ball.x >= f.x && ball.x <= f.x + f.w &&
+                ball.y >= f.y && ball.y <= f.y + f.h) {
+                onFloor = true;
+                break;
+            }
+        }
+    }
+
+    // 2. Circular floors
+    if (!onFloor && course.floorCircles) {
+        for (const fc of course.floorCircles) {
+            const dist = Math.hypot(ball.x - fc.x, ball.y - fc.y);
+            // If it's a 'dark' circle (hole in floor), it's NOT floor
+            if (dist <= fc.r) {
+                if (fc.dark) {
+                    onFloor = false;
+                } else {
+                    onFloor = true;
+                }
+            }
+        }
+    }
+
+    // 3. Polygon floors
+    if (!onFloor && course.floorPolygons) {
+        // Simple point-in-polygon check or assumption it is on floor if not out of bounds
+        // For now, if we have polygons, we trust the wall collisions more or canvas bounds
+        onFloor = true;
+    }
+
+    // If we have floors defined but ball isn't on any of them, reset
+    const hasDefinedFloors = (course.floors && course.floors.length > 0) ||
+        (course.floorCircles && course.floorCircles.length > 0);
+
+    if (hasDefinedFloors && !onFloor) {
+        // Add a small delay/grace period if needed, or just reset
+        resetBall();
+    }
+}
+
+// =====================================================
+//  Escape Menu & Pause Logic
+// =====================================================
+function toggleEscapeMenu() {
+    if (holeComplete) return;
+    if (isPaused) {
+        resumeGame();
+    } else {
+        pauseGame();
+    }
+}
+
+function pauseGame() {
+    isPaused = true;
+    showEscapeMenu();
+}
+
+function resumeGame() {
+    isPaused = false;
+    const overlay = document.getElementById('mg-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function showEscapeMenu() {
+    showOverlay(`
+        <div id="mg-escape-menu">
+            <h2>⏸️ Paused</h2>
+            <div class="mg-menu-options">
+                <button class="mg-menu-btn" id="mg-resume-btn">Resume</button>
+                <button class="mg-menu-btn" id="mg-reset-ball-btn">Reset Ball</button>
+                <button class="mg-menu-btn" id="mg-title-btn">Title Screen</button>
+            </div>
+        </div>
+    `);
+
+    document.getElementById('mg-resume-btn').addEventListener('click', resumeGame);
+    document.getElementById('mg-reset-ball-btn').addEventListener('click', resetBall);
+    document.getElementById('mg-title-btn').addEventListener('click', () => {
+        cleanup();
+        init();
+    });
 }
 
 // =====================================================
@@ -356,6 +494,7 @@ function loadCourse(c) {
 //  Update (Physics)
 // =====================================================
 function update(dt) {
+    if (isPaused) return;
     if (!ball || !ball.moving) return;
 
     // Apply velocity
@@ -441,6 +580,9 @@ function update(dt) {
 
     // Hole detection
     handleHoleDetection();
+
+    // Boundary/Fly-off check
+    checkBoundaries();
 }
 
 // =====================================================
@@ -624,6 +766,13 @@ function handleBouncerCollisions() {
                 ball.vy = ny * boost;
             }
 
+            // Cap impulse to prevent tunneling
+            const finalSpd = Math.hypot(ball.vx, ball.vy);
+            if (finalSpd > MAX_BALL_SPEED * 1.5) {
+                ball.vx = (ball.vx / finalSpd) * MAX_BALL_SPEED * 1.5;
+                ball.vy = (ball.vy / finalSpd) * MAX_BALL_SPEED * 1.5;
+            }
+
             playSound('boing');
         }
     }
@@ -676,6 +825,7 @@ function attachCanvasListeners() {
     // mousemove + mouseup on WINDOW so dragging outside the canvas works
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('keydown', onKeyDown);
 }
 
 function removeCanvasListeners() {
@@ -683,6 +833,13 @@ function removeCanvasListeners() {
     canvas.removeEventListener('mousedown', onMouseDown);
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
+    window.removeEventListener('keydown', onKeyDown);
+}
+
+function onKeyDown(e) {
+    if (e.key === 'Escape') {
+        toggleEscapeMenu();
+    }
 }
 
 function getCanvasPos(e) {
@@ -1210,22 +1367,19 @@ function drawHole() {
 
 function drawTee() {
     const { x, y } = course.tee;
+    const w = 32;
+    const h = 48;
 
-    // Tee marker (yellow circle)
-    ctx.fillStyle = '#FFD700';
-    ctx.strokeStyle = '#FFA000';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, 8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // Tee marker (light gray rectangle)
+    ctx.fillStyle = '#CCCCCC';
+    ctx.strokeStyle = '#AAAAAA';
+    ctx.lineWidth = 1;
+    ctx.fillRect(x - w / 2, y - h / 2, w, h);
+    ctx.strokeRect(x - w / 2, y - h / 2, w, h);
 
-    // "T" label
-    ctx.fillStyle = '#000';
-    ctx.font = 'bold 8px Segoe UI';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('T', x, y);
+    // Subtle texture for tee
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(x - w / 2 + 4, y - h / 2 + 4, w - 8, h - 8);
 }
 
 function drawBall() {
