@@ -29,5 +29,29 @@ export default {  // "The Serpent" — S-shaped zigzag path
         { x: 410, y: 370, w: 50, h: 50, forceX: 0, forceY: -6 },
         { x: 300, y: 260, w: 50, h: 40, forceX: -5, forceY: 0 },
         { x: 200, y: 130, w: 50, h: 40, forceX: 5, forceY: 0 }
-    ]
+    ],
+    theme: {
+        palette: {
+            skyTop: '#5c72b6',
+            skyBottom: '#f1b183',
+            grassBase: '#80975f',
+            rough: '#65562d',
+            path: '#b59a62',
+            wallMain: '#8b633d',
+            wallTrim: '#dfc486'
+        },
+        wallStyle: {
+            material: 'wood',
+            postSpacing: 32
+        },
+        decor: [
+            { kind: 'tree', x: 86, y: 184, h: 82, r: 28, color: '#4b6d33' },
+            { kind: 'tree', x: 614, y: 420, h: 84, r: 26, color: '#845d2a' },
+            { kind: 'pond', x: 594, y: 182, w: 112, h: 68, rotation: 0.1 },
+            { kind: 'flowers', x: 90, y: 486, density: 5 },
+            { kind: 'flowers', x: 622, y: 84, density: 5 },
+            { kind: 'bush', x: 118, y: 332, r: 16 },
+            { kind: 'stone', x: 584, y: 244, w: 18, h: 12, rotation: -0.12 }
+        ]
+    }
 };

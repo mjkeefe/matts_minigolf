@@ -22,5 +22,29 @@ export default {  // "The Clock" — rotating bar in a circular course
     ],
     ramps: [
         { x: 315, y: 400, w: 50, h: 40, forceX: 0, forceY: -6 }
-    ]
+    ],
+    theme: {
+        palette: {
+            skyTop: '#5b6eb1',
+            skyBottom: '#f0ab81',
+            grassBase: '#809761',
+            rough: '#65562f',
+            path: '#b59a64',
+            wallMain: '#8c6e54',
+            wallTrim: '#d9cab2'
+        },
+        wallStyle: {
+            material: 'stone',
+            postSpacing: 34
+        },
+        decor: [
+            { kind: 'tree', x: 92, y: 124, h: 78, r: 24, color: '#4a6832' },
+            { kind: 'tree', x: 596, y: 402, h: 84, r: 28, color: '#7c5a2d' },
+            { kind: 'flowers', x: 160, y: 470, density: 5 },
+            { kind: 'flowers', x: 518, y: 92, density: 5 },
+            { kind: 'bush', x: 104, y: 356, r: 15 },
+            { kind: 'bush', x: 580, y: 196, r: 16 },
+            { kind: 'stone', x: 590, y: 310, w: 16, h: 10, rotation: 0.15 }
+        ]
+    }
 };

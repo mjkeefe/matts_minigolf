@@ -28,5 +28,28 @@ export default { // "The Spiral" — Inward winding challenge
         { x: 300, y: 66, w: 100, h: 40, forceX: 4, forceY: 0 },   // Guideway top
         { x: 556, y: 220, w: 60, h: 100, forceX: 0, forceY: 4 },  // Guideway right
         { x: 250, y: 416, w: 100, h: 40, forceX: -4, forceY: 0 }  // Guideway bottom
-    ]
+    ],
+    theme: {
+        palette: {
+            skyTop: '#5d72b6',
+            skyBottom: '#efa97e',
+            grassBase: '#80985f',
+            rough: '#675932',
+            path: '#b79e68',
+            wallMain: '#8b633d',
+            wallTrim: '#e0c688'
+        },
+        wallStyle: {
+            material: 'wood',
+            postSpacing: 34
+        },
+        decor: [
+            { kind: 'tree', x: 40, y: 84, h: 70, r: 22, color: '#4b6a32' },
+            { kind: 'tree', x: 640, y: 420, h: 74, r: 24, color: '#7a592c' },
+            { kind: 'flowers', x: 76, y: 494, density: 4 },
+            { kind: 'flowers', x: 636, y: 62, density: 4 },
+            { kind: 'stone', x: 42, y: 286, w: 16, h: 10, rotation: 0.1 },
+            { kind: 'stone', x: 638, y: 246, w: 16, h: 10, rotation: -0.15 }
+        ]
+    }
 };

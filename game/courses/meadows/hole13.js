@@ -22,5 +22,29 @@ export default { // "The Zig-Zag" — Simple Z corridor
     obstacleWalls: [],
     angledWalls: [],
     bouncers: [],
-    ramps: []
+    ramps: [],
+    theme: {
+        palette: {
+            skyTop: '#6076ba',
+            skyBottom: '#f0af84',
+            grassBase: '#809961',
+            rough: '#675932',
+            path: '#b79e68',
+            wallMain: '#8b633d',
+            wallTrim: '#e0c688'
+        },
+        wallStyle: {
+            material: 'wood',
+            postSpacing: 34
+        },
+        decor: [
+            { kind: 'tree', x: 76, y: 218, h: 82, r: 26, color: '#4c6b33' },
+            { kind: 'tree', x: 612, y: 286, h: 86, r: 28, color: '#7d5c2b' },
+            { kind: 'pond', x: 626, y: 102, w: 84, h: 52, rotation: 0.08 },
+            { kind: 'flowers', x: 154, y: 486, density: 5 },
+            { kind: 'flowers', x: 614, y: 426, density: 5 },
+            { kind: 'bush', x: 370, y: 254, r: 14 },
+            { kind: 'stone', x: 76, y: 108, w: 16, h: 10, rotation: -0.15 }
+        ]
+    }
 };

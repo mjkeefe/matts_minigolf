@@ -1,5 +1,14 @@
 import { playSound } from '../utils/audio.js';
 import { showGameOver } from '../utils/leaderboard.js';
+import {
+    resolveMeadowTheme,
+    drawBackdrop,
+    drawSurfaceBase,
+    drawSurfaceEdge,
+    drawDecorLayer,
+    drawWallSkin,
+    drawAngledWallSkin
+} from './courses/meadows/theme.js';
 
 // =============================================================
 //  Mini Golf — Main Game Module
@@ -76,6 +85,11 @@ let animTimeout = null;
 export function init() {
     containerEl = document.getElementById('game-container');
     resetState();
+    const reviewHole = getReviewHoleFromQuery();
+    if (reviewHole) {
+        loadCustomHole(reviewHole);
+        return;
+    }
     showTitleScreen();
 }
 
@@ -118,6 +132,20 @@ function resetState() {
     stopLoop();
     clearTimeout(animTimeout);
     removeCanvasListeners();
+}
+
+function getReviewHoleFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const reviewHole = Number.parseInt(params.get('reviewHole') || '', 10);
+    if (!Number.isInteger(reviewHole)) return null;
+    return customHoles[reviewHole] ? reviewHole : null;
+}
+
+function cloneCourseData(source) {
+    if (typeof structuredClone === 'function') {
+        return structuredClone(source);
+    }
+    return JSON.parse(JSON.stringify(source));
 }
 
 // =====================================================
@@ -494,7 +522,8 @@ function showEscapeMenu() {
 //  Course Loading
 // =====================================================
 function loadCourse(c) {
-    course = c;
+    course = cloneCourseData(c);
+    course.theme = resolveMeadowTheme(course.theme);
     holeStrokes = 0;
     holeComplete = false;
 
@@ -1026,73 +1055,15 @@ function render() {
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     if (!course) { ctx.restore(); return; }
+    const courseTheme = course.theme || resolveMeadowTheme();
+    drawBackdrop(ctx, courseTheme, CANVAS_W, CANVAS_H);
 
-    // Use dark background
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.fillStyle = courseTheme.palette.rough;
+    ctx.fillRect(0, courseTheme.backdrop.horizonY - 6, CANVAS_W, CANVAS_H - courseTheme.backdrop.horizonY + 6);
 
-    // If custom floors exist, draw those in green
-    if (course.floors && course.floors.length > 0) {
-        ctx.fillStyle = '#2E7D32';
-        for (const f of course.floors) {
-            ctx.fillRect(f.x, f.y, f.w, f.h);
-        }
-
-        // Clip the subtle pattern
-        ctx.save();
-        ctx.beginPath();
-        for (const f of course.floors) {
-            ctx.rect(f.x, f.y, f.w, f.h);
-        }
-    }
-
-    // Floor polygons (for complex slanted shapes)
-    if (course.floorPolygons) {
-        for (const fp of course.floorPolygons) {
-            ctx.fillStyle = fp.color || '#2E7D32';
-            ctx.beginPath();
-            if (fp.points && fp.points.length > 0) {
-                ctx.moveTo(fp.points[0].x, fp.points[0].y);
-                for (let i = 1; i < fp.points.length; i++) {
-                    ctx.lineTo(fp.points[i].x, fp.points[i].y);
-                }
-                ctx.closePath();
-                ctx.fill();
-            }
-        }
-    }
-
-    if (course.floors && course.floors.length > 0) {
-        ctx.clip();
-
-        for (let i = 0; i < CANVAS_W; i += 40) {
-            ctx.fillStyle = (Math.floor(i / 40) % 2 === 0)
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.025)';
-            ctx.fillRect(i, 0, 20, CANVAS_H);
-        }
-        ctx.restore();
-    } else if (!course.floorCircles || course.floorCircles.length === 0) {
-        // Fallback backward-compatible full green screen (only if no circular floors)
-        ctx.fillStyle = '#2E7D32';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        for (let i = 0; i < CANVAS_W; i += 40) {
-            ctx.fillStyle = (Math.floor(i / 40) % 2 === 0)
-                ? 'rgba(255,255,255,0.025)'
-                : 'rgba(0,0,0,0.025)';
-            ctx.fillRect(i, 0, 20, CANVAS_H);
-        }
-    }
-
-    // Floor circles (for donut/circular courses)
-    if (course.floorCircles) {
-        for (const fc of course.floorCircles) {
-            ctx.fillStyle = fc.dark ? '#1a1a2e' : '#2E7D32';
-            ctx.beginPath();
-            ctx.arc(fc.x, fc.y, fc.r, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
+    drawSurfaceBase(ctx, { course, courseTheme, canvasW: CANVAS_W, canvasH: CANVAS_H });
+    drawSurfaceEdge(ctx, { course, courseTheme, canvasW: CANVAS_W, canvasH: CANVAS_H });
+    drawDecorLayer(ctx, courseTheme.decor, courseTheme);
 
     drawRamps();
     drawRotatingObstacles();
@@ -1109,57 +1080,16 @@ function render() {
 
 function drawWalls() {
     const allWalls = [...course.outerWalls, ...course.obstacleWalls];
+    const wallStyle = course.theme?.wallStyle || {};
+    const palette = course.theme?.palette || resolveMeadowTheme().palette;
 
     for (const w of allWalls) {
-        // Shadow/depth on bottom-right edges
-        ctx.fillStyle = 'rgba(0,0,0,0.35)';
-        ctx.fillRect(w.x + 3, w.y + 3, w.w, w.h);
-
-        // Main white wall body
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(w.x, w.y, w.w, w.h);
-
-        // Top-left highlight for 3D inset look
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillRect(w.x, w.y, w.w, 3);
-        ctx.fillRect(w.x, w.y, 3, w.h);
-
-        // Bottom-right shadow on wall face
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.fillRect(w.x, w.y + w.h - 3, w.w, 3);
-        ctx.fillRect(w.x + w.w - 3, w.y, 3, w.h);
+        drawWallSkin(ctx, w, wallStyle, palette);
     }
 
     if (course.angledWalls) {
-        ctx.lineCap = 'round';
         for (const w of course.angledWalls) {
-            ctx.lineWidth = w.thickness || WALL_THICKNESS;
-
-            // Setup shadow
-            ctx.shadowColor = 'rgba(0,0,0,0.35)'; // depth shadow
-            ctx.shadowBlur = 0;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
-
-            // Main white line
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.beginPath();
-            ctx.moveTo(w.x1, w.y1);
-            ctx.lineTo(w.x2, w.y2);
-            ctx.stroke();
-
-            // Clear shadow
-            ctx.shadowColor = 'transparent';
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-
-            // Highlight
-            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(w.x1 - 2, w.y1 - 2);
-            ctx.lineTo(w.x2 - 2, w.y2 - 2);
-            ctx.stroke();
+            drawAngledWallSkin(ctx, w, wallStyle, palette, WALL_THICKNESS);
         }
     }
 
@@ -1325,52 +1255,63 @@ function drawBouncers() {
 
 function drawHole() {
     const { x, y } = course.hole;
+    const palette = course.theme?.palette || resolveMeadowTheme().palette;
 
-    // Hole cup (black circle)
-    ctx.fillStyle = '#000000';
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(x + 1, y + 4, HOLE_RADIUS + 3, HOLE_RADIUS - 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = palette.cup;
     ctx.beginPath();
     ctx.arc(x, y, HOLE_RADIUS, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hole rim
-    ctx.strokeStyle = '#333333';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(249,235,200,0.35)';
+    ctx.lineWidth = 3;
     ctx.stroke();
 
-    // Flag pole
-    ctx.strokeStyle = '#FFFFFF';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#f0e2c5';
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.lineTo(x, y - 32);
+    ctx.lineTo(x, y - 34);
     ctx.stroke();
 
-    // Flag
-    ctx.fillStyle = '#e74c3c';
+    ctx.fillStyle = palette.flag;
     ctx.beginPath();
-    ctx.moveTo(x, y - 32);
-    ctx.lineTo(x + 16, y - 26);
-    ctx.lineTo(x, y - 20);
+    ctx.moveTo(x, y - 34);
+    ctx.lineTo(x + 18, y - 28);
+    ctx.lineTo(x, y - 18);
     ctx.closePath();
     ctx.fill();
 }
 
 function drawTee() {
     const { x, y } = course.tee;
-    const w = 32;
-    const h = 48;
+    const palette = course.theme?.palette || resolveMeadowTheme().palette;
+    const w = 34;
+    const h = 44;
+    const left = x - w / 2;
+    const top = y - h / 2;
 
-    // Tee marker (light gray rectangle)
-    ctx.fillStyle = '#CCCCCC';
-    ctx.strokeStyle = '#AAAAAA';
-    ctx.lineWidth = 1;
-    ctx.fillRect(x - w / 2, y - h / 2, w, h);
-    ctx.strokeRect(x - w / 2, y - h / 2, w, h);
+    ctx.fillStyle = 'rgba(71,47,26,0.22)';
+    ctx.fillRect(left + 2, top + 4, w, h);
 
-    // Subtle texture for tee
-    ctx.fillStyle = 'rgba(0,0,0,0.05)';
-    ctx.fillRect(x - w / 2 + 4, y - h / 2 + 4, w - 8, h - 8);
+    const grad = ctx.createLinearGradient(left, top, left, top + h);
+    grad.addColorStop(0, '#d8bf87');
+    grad.addColorStop(1, palette.tee);
+    ctx.fillStyle = grad;
+    ctx.fillRect(left, top, w, h);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(left, top, w, 3);
+
+    ctx.fillStyle = 'rgba(86,57,32,0.25)';
+    for (let yLine = top + 8; yLine < top + h - 4; yLine += 8) {
+        ctx.fillRect(left + 3, yLine, w - 6, 2);
+    }
 }
 
 function drawBall() {
