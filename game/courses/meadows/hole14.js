@@ -1,7 +1,7 @@
 export default { // "The Plinko" — Gravity/peg challenge
     floors: [{ x: 50, y: 50, w: 580, h: 420 }],
-    tee: { x: 340, y: 100 },
-    hole: { x: 340, y: 430 },
+    tee: { x: 340, y: 92 },
+    hole: { x: 340, y: 424 },
     outerWalls: [
         { x: 34, y: 34, w: 612, h: 16 },
         { x: 34, y: 470, w: 612, h: 16 },
@@ -12,23 +12,25 @@ export default { // "The Plinko" — Gravity/peg challenge
     angledWalls: [],
     bouncers: (() => {
         const b = [];
-        for (let row = 0; row < 5; row++) {
-            const cols = row % 2 === 0 ? 8 : 7;
-            const offset = row % 2 === 0 ? 80 : 120;
+        for (let row = 0; row < 4; row++) {
+            const cols = row % 2 === 0 ? 7 : 6;
+            const offset = row % 2 === 0 ? 100 : 140;
             for (let col = 0; col < cols; col++) {
-                const x = offset + col * 80;
+                const x = offset + col * 74;
                 if (x >= 630) continue;
                 b.push({
                     x,
-                    y: 180 + row * 60,
-                    r: 10,
+                    y: 176 + row * 62,
+                    r: 8,
                     color: (row + col) % 2 === 0 ? '#FFEB3B' : '#FF9800'
                 });
             }
         }
         return b;
     })(),
-    ramps: [],
+    ramps: [
+        { x: 318, y: 332, w: 44, h: 54, forceX: 0, forceY: 3.6 }
+    ],
     theme: {
         palette: {
             skyTop: '#6175b8',
