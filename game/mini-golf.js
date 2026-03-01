@@ -1,14 +1,14 @@
 import { playSound } from '../utils/audio.js';
 import { showGameOver } from '../utils/leaderboard.js';
 import {
-    resolveMeadowTheme,
     drawBackdrop,
     drawSurfaceBase,
     drawSurfaceEdge,
     drawDecorLayer,
     drawWallSkin,
     drawAngledWallSkin
-} from './courses/meadows/theme.js';
+} from './courses/shared/theme.js';
+import { courses } from './courses/index.js';
 
 // =============================================================
 //  Mini Golf — Main Game Module
@@ -29,8 +29,6 @@ const BOUNCER_RADIUS = 28;
 const BOUNCER_COLORS = ['#FF5722', '#FF9800', '#E91E63', '#9C27B0', '#2196F3', '#00BCD4'];
 const RAMP_FORCE = 0.15;
 const MAX_BALL_SPEED = 24; // prevent tunneling and "disappearing" ball
-
-import { customHoles } from './courses/meadows/index.js';
 
 
 // Fade-in state
@@ -58,6 +56,8 @@ let currentHole = 0;   // 1-based
 let strokesPerHole = [];  // array of stroke counts per completed hole
 let holeStrokes = 0;   // strokes on the current hole
 let totalStrokes = 0;  // running total
+let selectedCourseId = 'meadows';
+let selectedCourseMeta = courses[selectedCourseId];
 
 // Course
 let course = null;     // { tee, hole, outerWalls, obstacleWalls, ramps }
@@ -119,6 +119,8 @@ function resetState() {
     strokesPerHole = [];
     holeStrokes = 0;
     totalStrokes = 0;
+    selectedCourseId = 'meadows';
+    selectedCourseMeta = courses[selectedCourseId];
     course = null;
     ball = null;
     kbAimAngle = 0;
@@ -136,9 +138,28 @@ function resetState() {
 
 function getReviewHoleFromQuery() {
     const params = new URLSearchParams(window.location.search);
+    const requestedCourse = params.get('course');
+    setSelectedCourse(requestedCourse);
     const reviewHole = Number.parseInt(params.get('reviewHole') || '', 10);
     if (!Number.isInteger(reviewHole)) return null;
-    return customHoles[reviewHole] ? reviewHole : null;
+    return getActiveHoles()[reviewHole] ? reviewHole : null;
+}
+
+function setSelectedCourse(courseId) {
+    selectedCourseId = courses[courseId] ? courseId : 'meadows';
+    selectedCourseMeta = courses[selectedCourseId];
+}
+
+function getActiveHoles() {
+    return selectedCourseMeta?.holes || courses.meadows.holes;
+}
+
+function getHoleTotalForSelectedCourse() {
+    return Object.keys(getActiveHoles()).length;
+}
+
+function getActiveThemeDefaults() {
+    return selectedCourseMeta?.resolveTheme ? selectedCourseMeta.resolveTheme() : courses.meadows.resolveTheme();
 }
 
 function cloneCourseData(source) {
@@ -264,27 +285,28 @@ function showSelectionScreen() {
         <div id="mg-game">
             <div id="mg-selection">
                 <h1>⛳ Select Your Course</h1>
-                <p class="mg-subtitle">Choose a course to begin your 18-hole journey</p>
+                <p class="mg-subtitle">Choose a course to begin your journey</p>
                 
                 <div class="mg-course-grid">
                     <div class="mg-course-card" id="mg-course-meadows">
-                        <div class="mg-course-image" style="background-image: url('game/meadows.png')"></div>
+                        <div class="mg-course-image" style="background-image: ${courses.meadows.previewImage}"></div>
                         <div class="mg-course-info">
-                            <span class="mg-course-tag">EASY</span>
-                            <h3>Minigolf Meadows</h3>
+                            <span class="mg-course-tag">${courses.meadows.difficulty}</span>
+                            <h3>${courses.meadows.name}</h3>
                             <p>18 Holes • Par 54</p>
                             <button class="mg-course-btn">PLAY COURSE</button>
                         </div>
                     </div>
                     
-                    <div class="mg-course-card locked">
-                        <div class="mg-course-image" style="background-image: linear-gradient(45deg, #333, #111)">
+                    <div class="mg-course-card" id="mg-course-lava">
+                        <div class="mg-course-image" style="background-image: ${courses['lava-lakes'].previewImage}">
                             <div class="mg-lock-icon">🔒</div>
                         </div>
                         <div class="mg-course-info">
-                            <span class="mg-course-tag">COMING SOON</span>
-                            <h3>Lava Lakes</h3>
-                            <p>Coming Soon</p>
+                            <span class="mg-course-tag">${courses['lava-lakes'].difficulty}</span>
+                            <h3>${courses['lava-lakes'].name}</h3>
+                            <p>${courses['lava-lakes'].parLabel}</p>
+                            <button class="mg-course-btn">PLAY COURSE</button>
                         </div>
                     </div>
                 </div>
@@ -317,12 +339,15 @@ function showSelectionScreen() {
     });
 
     document.getElementById('mg-course-meadows').addEventListener('click', () => {
-        startGame(18); // Start full 18 holes
+        startGame('meadows');
+    });
+    document.getElementById('mg-course-lava').addEventListener('click', () => {
+        startGame('lava-lakes');
     });
 }
 
 function loadCustomHole(holeNumber) {
-    const holeData = customHoles[holeNumber];
+    const holeData = getActiveHoles()[holeNumber];
     if (!holeData) {
         playSound('boing');
         const msgEl = document.getElementById('mg-selection-msg');
@@ -334,7 +359,7 @@ function loadCustomHole(holeNumber) {
     }
 
     // Set game state for testing specific hole
-    holeCount = 18;
+    holeCount = getHoleTotalForSelectedCourse();
     currentHole = holeNumber;
     strokesPerHole = []; // reset strokes since we're testing individually
     holeStrokes = 0;
@@ -348,15 +373,16 @@ function loadCustomHole(holeNumber) {
 // =====================================================
 //  Game Start
 // =====================================================
-function startGame(holes) {
-    holeCount = holes;
+function startGame(courseId) {
+    setSelectedCourse(courseId);
+    holeCount = getHoleTotalForSelectedCourse();
     currentHole = 1;
     strokesPerHole = [];
     holeStrokes = 0;
     totalStrokes = 0;
 
     buildGameDOM();
-    const holeData = customHoles[currentHole];
+    const holeData = getActiveHoles()[currentHole];
     if (holeData) {
         loadCourse(holeData);
         startLoop();
@@ -538,7 +564,7 @@ function showEscapeMenu() {
 // =====================================================
 function loadCourse(c) {
     course = cloneCourseData(c);
-    course.theme = resolveMeadowTheme(course.theme);
+    course.theme = selectedCourseMeta.resolveTheme(course.theme);
     holeStrokes = 0;
     holeComplete = false;
 
@@ -972,7 +998,7 @@ function showHoleCompleteOverlay() {
 
 function advanceToNextHole() {
     currentHole++;
-    const holeData = customHoles[currentHole];
+    const holeData = getActiveHoles()[currentHole];
     if (holeData) {
         loadCourse(holeData);
     } else {
@@ -1019,7 +1045,7 @@ function showScorecard() {
 
     // After reading time, show the game over / leaderboard screen
     animTimeout = setTimeout(() => {
-        const leaderboardKey = `mini-golf-${holeCount}`;
+        const leaderboardKey = `${selectedCourseMeta.leaderboardPrefix}-${holeCount}`;
         showGameOver(leaderboardKey, totalStrokes, containerEl, () => {
             // Play Again → reset and show selection
             cleanup();
@@ -1052,7 +1078,7 @@ function render() {
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
     if (!course) { ctx.restore(); return; }
-    const courseTheme = course.theme || resolveMeadowTheme();
+    const courseTheme = course.theme || getActiveThemeDefaults();
     drawBackdrop(ctx, courseTheme, CANVAS_W, CANVAS_H);
 
     ctx.fillStyle = courseTheme.palette.rough;
@@ -1078,7 +1104,7 @@ function render() {
 function drawWalls() {
     const allWalls = [...course.outerWalls, ...course.obstacleWalls];
     const wallStyle = course.theme?.wallStyle || {};
-    const palette = course.theme?.palette || resolveMeadowTheme().palette;
+    const palette = course.theme?.palette || getActiveThemeDefaults().palette;
 
     for (const w of allWalls) {
         drawWallSkin(ctx, w, wallStyle, palette);
@@ -1170,24 +1196,40 @@ function drawRotatingObstacles() {
 
 function drawRamps() {
     if (!course || !course.ramps || course.ramps.length === 0) return;
-    const palette = course.theme?.palette || resolveMeadowTheme().palette;
+    const palette = course.theme?.palette || getActiveThemeDefaults().palette;
     for (const r of course.ramps) {
-        ctx.fillStyle = 'rgba(68, 48, 26, 0.18)';
-        ctx.fillRect(r.x + 2, r.y + 3, r.w, r.h);
+        if (selectedCourseId === 'lava-lakes') {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+            ctx.fillRect(r.x + 2, r.y + 3, r.w, r.h);
 
-        const trail = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
-        trail.addColorStop(0, '#d7bf8a');
-        trail.addColorStop(1, palette.path);
-        ctx.fillStyle = trail;
-        ctx.fillRect(r.x, r.y, r.w, r.h);
+            const lava = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+            lava.addColorStop(0, '#8B0000');
+            lava.addColorStop(0.5, '#d73b18');
+            lava.addColorStop(1, '#FF6B35');
+            ctx.fillStyle = lava;
+            ctx.fillRect(r.x, r.y, r.w, r.h);
 
-        ctx.strokeStyle = 'rgba(110, 77, 44, 0.45)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(r.x, r.y, r.w, r.h);
+            ctx.strokeStyle = 'rgba(255, 191, 112, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(r.x, r.y, r.w, r.h);
+        } else {
+            ctx.fillStyle = 'rgba(68, 48, 26, 0.18)';
+            ctx.fillRect(r.x + 2, r.y + 3, r.w, r.h);
 
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        for (let plank = r.y + 6; plank < r.y + r.h - 3; plank += 8) {
-            ctx.fillRect(r.x + 3, plank, r.w - 6, 1);
+            const trail = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+            trail.addColorStop(0, '#d7bf8a');
+            trail.addColorStop(1, palette.path);
+            ctx.fillStyle = trail;
+            ctx.fillRect(r.x, r.y, r.w, r.h);
+
+            ctx.strokeStyle = 'rgba(110, 77, 44, 0.45)';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            for (let plank = r.y + 6; plank < r.y + r.h - 3; plank += 8) {
+                ctx.fillRect(r.x + 3, plank, r.w - 6, 1);
+            }
         }
 
         const cx = r.x + r.w / 2;
@@ -1199,7 +1241,7 @@ function drawRamps() {
         const ax = (fx / fLen) * 15;
         const ay = (fy / fLen) * 15;
 
-        ctx.strokeStyle = 'rgba(89, 125, 56, 0.95)';
+        ctx.strokeStyle = selectedCourseId === 'lava-lakes' ? 'rgba(255, 245, 210, 0.92)' : 'rgba(89, 125, 56, 0.95)';
         ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -1216,7 +1258,7 @@ function drawRamps() {
         ctx.lineTo(cx + ax - headLen * Math.cos(angle + 0.5), cy + ay - headLen * Math.sin(angle + 0.5));
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(220, 237, 168, 0.65)';
+        ctx.fillStyle = selectedCourseId === 'lava-lakes' ? 'rgba(255, 220, 140, 0.75)' : 'rgba(220, 237, 168, 0.65)';
         ctx.beginPath();
         ctx.arc(cx - ax * 0.2, cy - ay * 0.2, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -1274,7 +1316,27 @@ function drawBouncers() {
 
 function drawHole() {
     const { x, y } = course.hole;
-    const palette = course.theme?.palette || resolveMeadowTheme().palette;
+    const palette = course.theme?.palette || getActiveThemeDefaults().palette;
+
+    if (selectedCourseId === 'lava-lakes') {
+        ctx.fillStyle = 'rgba(0,0,0,0.26)';
+        ctx.beginPath();
+        ctx.ellipse(x + 2, y + 5, HOLE_RADIUS + 4, HOLE_RADIUS - 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowColor = 'rgba(255, 108, 53, 0.55)';
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = palette.cup;
+        ctx.beginPath();
+        ctx.arc(x, y, HOLE_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.strokeStyle = 'rgba(255, 128, 72, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        return;
+    }
 
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
     ctx.beginPath();
@@ -1309,7 +1371,34 @@ function drawHole() {
 
 function drawTee() {
     const { x, y } = course.tee;
-    const palette = course.theme?.palette || resolveMeadowTheme().palette;
+    const palette = course.theme?.palette || getActiveThemeDefaults().palette;
+
+    if (selectedCourseId === 'lava-lakes') {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        ctx.beginPath();
+        ctx.arc(x + 2, y + 4, 20, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.shadowColor = 'rgba(255, 100, 40, 0.55)';
+        ctx.shadowBlur = 16;
+        const glow = ctx.createRadialGradient(x - 4, y - 6, 2, x, y, 20);
+        glow.addColorStop(0, '#ffd868');
+        glow.addColorStop(0.35, '#ff7b28');
+        glow.addColorStop(1, palette.tee);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.strokeStyle = 'rgba(255, 230, 180, 0.35)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, y, 18, 0, Math.PI * 2);
+        ctx.stroke();
+        return;
+    }
+
     const w = 34;
     const h = 44;
     const left = x - w / 2;
