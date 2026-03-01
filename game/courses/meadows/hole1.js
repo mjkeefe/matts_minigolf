@@ -1,7 +1,7 @@
 export default {
     floors: [
         { x: 72, y: 336, w: 382, h: 118 },
-        { x: 412, y: 78, w: 118, h: 308 }
+        { x: 412, y: 78, w: 118, h: 376 }
     ],
     tee: { x: 132, y: 394 },
     hole: { x: 470, y: 124 },
@@ -52,13 +52,13 @@ export default {
             trimColor: '#e0c488'
         },
         decor: [
-            { kind: 'tree', x: 118, y: 222, h: 82, r: 28, color: '#4a6a31' },
-            { kind: 'tree', x: 586, y: 236, h: 88, r: 30, color: '#7f5d26' },
+            { kind: 'tree', x: 118, y: 286, h: 78, r: 24, color: '#4a6a31' },
+            { kind: 'tree', x: 586, y: 328, h: 82, r: 26, color: '#7f5d26' },
             { kind: 'pond', x: 562, y: 416, w: 132, h: 82, rotation: -0.12 },
             { kind: 'sign', x: 104, y: 410, w: 36, h: 18 },
             { kind: 'flowers', x: 82, y: 362, density: 5 },
             { kind: 'flowers', x: 210, y: 486, density: 6 },
-            { kind: 'flowers', x: 580, y: 118, density: 5 },
+            { kind: 'flowers', x: 580, y: 276, density: 5 },
             { kind: 'flowers', x: 610, y: 438, density: 4 },
             { kind: 'bush', x: 540, y: 370, r: 18 },
             { kind: 'bush', x: 604, y: 340, r: 15 },

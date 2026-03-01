@@ -38,12 +38,12 @@ export default {  // "The Clock" — rotating bar in a circular course
             postSpacing: 34
         },
         decor: [
-            { kind: 'tree', x: 92, y: 124, h: 78, r: 24, color: '#4a6832' },
+            { kind: 'tree', x: 92, y: 278, h: 70, r: 22, color: '#4a6832' },
             { kind: 'tree', x: 596, y: 402, h: 84, r: 28, color: '#7c5a2d' },
             { kind: 'flowers', x: 160, y: 470, density: 5 },
-            { kind: 'flowers', x: 518, y: 92, density: 5 },
+            { kind: 'flowers', x: 518, y: 438, density: 5 },
             { kind: 'bush', x: 104, y: 356, r: 15 },
-            { kind: 'bush', x: 580, y: 196, r: 16 },
+            { kind: 'bush', x: 580, y: 268, r: 16 },
             { kind: 'stone', x: 590, y: 310, w: 16, h: 10, rotation: 0.15 }
         ]
     }

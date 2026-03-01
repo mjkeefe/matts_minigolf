@@ -1,13 +1,8 @@
 export default { // "The Spiral" — Inward winding challenge
     floors: [{ x: 50, y: 50, w: 580, h: 420 }],
-    tee: { x: 100, y: 430 },
+    tee: { x: 98, y: 90 },
     hole: { x: 340, y: 260 },
-    outerWalls: [
-        { x: 34, y: 34, w: 612, h: 16 },
-        { x: 34, y: 470, w: 612, h: 16 },
-        { x: 34, y: 34, w: 16, h: 452 },
-        { x: 630, y: 34, w: 16, h: 452 }
-    ],
+    outerWalls: [],
     obstacleWalls: [],
     angledWalls: [
         // Spiral Path (approx Snail Shell)
@@ -44,12 +39,12 @@ export default { // "The Spiral" — Inward winding challenge
             postSpacing: 34
         },
         decor: [
-            { kind: 'tree', x: 40, y: 84, h: 70, r: 22, color: '#4b6a32' },
+            { kind: 'tree', x: 88, y: 248, h: 66, r: 20, color: '#4b6a32' },
             { kind: 'tree', x: 640, y: 420, h: 74, r: 24, color: '#7a592c' },
             { kind: 'flowers', x: 76, y: 494, density: 4 },
-            { kind: 'flowers', x: 636, y: 62, density: 4 },
-            { kind: 'stone', x: 42, y: 286, w: 16, h: 10, rotation: 0.1 },
-            { kind: 'stone', x: 638, y: 246, w: 16, h: 10, rotation: -0.15 }
+            { kind: 'flowers', x: 606, y: 444, density: 4 },
+            { kind: 'stone', x: 82, y: 318, w: 16, h: 10, rotation: 0.1 },
+            { kind: 'stone', x: 606, y: 246, w: 16, h: 10, rotation: -0.15 }
         ]
     }
 };

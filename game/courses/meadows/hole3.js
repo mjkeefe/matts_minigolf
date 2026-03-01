@@ -38,11 +38,11 @@ export default {  // "The Pinball" — wide rectangular, bouncers everywhere
             postSpacing: 42
         },
         decor: [
-            { kind: 'tree', x: 42, y: 116, h: 70, r: 22, color: '#4d6b33' },
+            { kind: 'tree', x: 60, y: 240, h: 64, r: 18, color: '#4d6b33' },
             { kind: 'tree', x: 636, y: 396, h: 74, r: 24, color: '#735328' },
             { kind: 'flowers', x: 46, y: 468, density: 4 },
-            { kind: 'flowers', x: 638, y: 62, density: 4 },
-            { kind: 'stone', x: 44, y: 286, w: 16, h: 10, rotation: -0.2 },
+            { kind: 'flowers', x: 620, y: 434, density: 4 },
+            { kind: 'stone', x: 60, y: 286, w: 16, h: 10, rotation: -0.2 },
             { kind: 'stone', x: 636, y: 196, w: 18, h: 12, rotation: 0.18 }
         ]
     }

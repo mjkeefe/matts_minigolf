@@ -234,10 +234,15 @@ function showTitleScreen() {
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-title-screen" class="mg-screen">
-                <div class="mg-logo-wrap">
-                    <img src="game/logo.png" alt="Matt's Minigolf" class="mg-main-logo">
+                <div class="mg-title-glow"></div>
+                <div class="mg-title-panel">
+                    <p class="mg-title-kicker">Premium 2D Minigolf</p>
+                    <div class="mg-logo-wrap">
+                        <img src="game/logo.png" alt="Matt's Minigolf" class="mg-main-logo">
+                    </div>
+                    <p class="mg-title-tagline">A polished arcade putting experience with handcrafted courses, scenic hazards, and precise shot control.</p>
+                    <button class="mg-play-btn" id="mg-start-btn">PLAY</button>
                 </div>
-                <button class="mg-play-btn" id="mg-start-btn">PLAY</button>
             </div>
         </div>
     `;
@@ -365,9 +370,18 @@ function buildGameDOM() {
     containerEl.innerHTML = `
         <div id="mg-game">
             <div id="mg-hud">
-                <div class="mg-hud-item" id="mg-hole-counter">Hole <span id="mg-current-hole">1</span> of <span id="mg-total-holes">${holeCount}</span></div>
-                <div class="mg-hud-item">Strokes: <span id="mg-strokes">0</span></div>
-                <div class="mg-hud-item">Total: <span id="mg-total">0</span></div>
+                <div class="mg-hud-item" id="mg-hole-counter">
+                    <span class="mg-hud-label">Hole</span>
+                    <span class="mg-hud-value"><span id="mg-current-hole">1</span> / <span id="mg-total-holes">${holeCount}</span></span>
+                </div>
+                <div class="mg-hud-item">
+                    <span class="mg-hud-label">Strokes</span>
+                    <span class="mg-hud-value" id="mg-strokes">0</span>
+                </div>
+                <div class="mg-hud-item">
+                    <span class="mg-hud-label">Total</span>
+                    <span class="mg-hud-value" id="mg-total">0</span>
+                </div>
             </div>
             <div id="mg-canvas-wrap">
                 <canvas id="mg-canvas" width="${CANVAS_W}" height="${CANVAS_H}"></canvas>
@@ -500,8 +514,9 @@ function resumeGame() {
 
 function showEscapeMenu() {
     showOverlay(`
-        <div id="mg-escape-menu">
+        <div id="mg-escape-menu" class="mg-overlay-card">
             <h2>⏸️ Paused</h2>
+            <p class="mg-overlay-copy">Take a breath, reset your line, or head back to the main screen.</p>
             <div class="mg-menu-options">
                 <button class="mg-menu-btn" id="mg-resume-btn">Resume</button>
                 <button class="mg-menu-btn" id="mg-reset-ball-btn">Reset Ball</button>
@@ -1002,6 +1017,7 @@ function showScorecard() {
     showOverlay(`
         <div id="mg-scorecard">
             <h2>📋 Scorecard</h2>
+            <p class="mg-scorecard-subtitle">Round summary for ${holeCount} holes.</p>
             <table>
                 <thead>
                     <tr>
@@ -1063,7 +1079,6 @@ function render() {
 
     drawSurfaceBase(ctx, { course, courseTheme, canvasW: CANVAS_W, canvasH: CANVAS_H });
     drawSurfaceEdge(ctx, { course, courseTheme, canvasW: CANVAS_W, canvasH: CANVAS_H });
-    drawDecorLayer(ctx, courseTheme.decor, courseTheme);
 
     drawRamps();
     drawRotatingObstacles();
@@ -1071,6 +1086,7 @@ function render() {
     drawHole();
     drawTee();
     drawWalls();
+    drawDecorLayer(ctx, courseTheme.decor, courseTheme);
     drawBall();
     drawAimLine();
     drawPowerMeter();
@@ -1173,15 +1189,26 @@ function drawRotatingObstacles() {
 
 function drawRamps() {
     if (!course || !course.ramps || course.ramps.length === 0) return;
+    const palette = course.theme?.palette || resolveMeadowTheme().palette;
     for (const r of course.ramps) {
-        // Ramp background
-        ctx.fillStyle = 'rgba(0, 200, 255, 0.25)';
+        ctx.fillStyle = 'rgba(68, 48, 26, 0.18)';
+        ctx.fillRect(r.x + 2, r.y + 3, r.w, r.h);
+
+        const trail = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+        trail.addColorStop(0, '#d7bf8a');
+        trail.addColorStop(1, palette.path);
+        ctx.fillStyle = trail;
         ctx.fillRect(r.x, r.y, r.w, r.h);
-        ctx.strokeStyle = 'rgba(0, 200, 255, 0.6)';
+
+        ctx.strokeStyle = 'rgba(110, 77, 44, 0.45)';
         ctx.lineWidth = 2;
         ctx.strokeRect(r.x, r.y, r.w, r.h);
 
-        // Arrow
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        for (let plank = r.y + 6; plank < r.y + r.h - 3; plank += 8) {
+            ctx.fillRect(r.x + 3, plank, r.w - 6, 1);
+        }
+
         const cx = r.x + r.w / 2;
         const cy = r.y + r.h / 2;
         const fx = r.forceX || 0;
@@ -1191,14 +1218,14 @@ function drawRamps() {
         const ax = (fx / fLen) * 15;
         const ay = (fy / fLen) * 15;
 
-        ctx.strokeStyle = 'rgba(0, 220, 255, 0.9)';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(89, 125, 56, 0.95)';
+        ctx.lineWidth = 4;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(cx - ax, cy - ay);
         ctx.lineTo(cx + ax, cy + ay);
         ctx.stroke();
-        // Arrowhead
+
         const headLen = 6;
         const angle = Math.atan2(ay, ax);
         ctx.beginPath();
@@ -1207,6 +1234,11 @@ function drawRamps() {
         ctx.moveTo(cx + ax, cy + ay);
         ctx.lineTo(cx + ax - headLen * Math.cos(angle + 0.5), cy + ay - headLen * Math.sin(angle + 0.5));
         ctx.stroke();
+
+        ctx.fillStyle = 'rgba(220, 237, 168, 0.65)';
+        ctx.beginPath();
+        ctx.arc(cx - ax * 0.2, cy - ay * 0.2, 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
@@ -1216,38 +1248,44 @@ function drawBouncers() {
 
         ctx.save();
 
-        // Outer glow
-        ctx.shadowColor = color;
-        ctx.shadowBlur = 14;
-
-        // Outer ring
-        ctx.fillStyle = color;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3;
+        // Grounded shadow so pegs feel planted on the turf
+        ctx.fillStyle = 'rgba(25, 22, 15, 0.22)';
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.ellipse(x + 1, y + r * 0.72, r * 0.95, r * 0.42, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
+
+        ctx.shadowColor = 'rgba(255, 235, 160, 0.18)';
+        ctx.shadowBlur = 8;
+
+        // Warm outer rim
+        ctx.fillStyle = '#d9c38c';
+        ctx.beginPath();
+        ctx.arc(x, y, r + 1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Colored peg face
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 0.86, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.shadowBlur = 0;
 
-        // Inner mid ring
-        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillStyle = 'rgba(255,255,255,0.16)';
         ctx.beginPath();
-        ctx.arc(x, y, r * 0.65, 0, Math.PI * 2);
+        ctx.arc(x - r * 0.1, y - r * 0.12, r * 0.5, 0, Math.PI * 2);
         ctx.fill();
 
-        // Center dot
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillStyle = 'rgba(92, 68, 34, 0.26)';
         ctx.beginPath();
-        ctx.arc(x, y, r * 0.28, 0, Math.PI * 2);
+        ctx.arc(x + r * 0.12, y + r * 0.18, r * 0.3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Specular highlight
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.strokeStyle = 'rgba(255,248,224,0.45)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.2, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.arc(x, y, r * 0.86, 0.35 * Math.PI, 1.15 * Math.PI);
+        ctx.stroke();
 
         ctx.restore();
     }

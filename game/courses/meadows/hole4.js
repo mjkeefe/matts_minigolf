@@ -45,13 +45,13 @@ export default {  // "The Serpent" — S-shaped zigzag path
             postSpacing: 32
         },
         decor: [
-            { kind: 'tree', x: 86, y: 184, h: 82, r: 28, color: '#4b6d33' },
+            { kind: 'tree', x: 86, y: 262, h: 78, r: 24, color: '#4b6d33' },
             { kind: 'tree', x: 614, y: 420, h: 84, r: 26, color: '#845d2a' },
-            { kind: 'pond', x: 594, y: 182, w: 112, h: 68, rotation: 0.1 },
+            { kind: 'pond', x: 594, y: 262, w: 112, h: 68, rotation: 0.1 },
             { kind: 'flowers', x: 90, y: 486, density: 5 },
-            { kind: 'flowers', x: 622, y: 84, density: 5 },
+            { kind: 'flowers', x: 622, y: 236, density: 5 },
             { kind: 'bush', x: 118, y: 332, r: 16 },
-            { kind: 'stone', x: 584, y: 244, w: 18, h: 12, rotation: -0.12 }
+            { kind: 'stone', x: 584, y: 326, w: 18, h: 12, rotation: -0.12 }
         ]
     }
 };

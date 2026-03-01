@@ -41,10 +41,10 @@ export default { // "The Grand Finale" — The Ultimate Test
             postSpacing: 34
         },
         decor: [
-            { kind: 'tree', x: 40, y: 118, h: 72, r: 22, color: '#4b6a32' },
+            { kind: 'tree', x: 78, y: 248, h: 66, r: 20, color: '#4b6a32' },
             { kind: 'tree', x: 640, y: 404, h: 76, r: 24, color: '#7b5a2c' },
             { kind: 'flowers', x: 78, y: 454, density: 4 },
-            { kind: 'flowers', x: 636, y: 66, density: 4 },
+            { kind: 'flowers', x: 606, y: 448, density: 4 },
             { kind: 'flowers', x: 340, y: 496, density: 5 },
             { kind: 'stone', x: 42, y: 250, w: 16, h: 10, rotation: 0.12 },
             { kind: 'stone', x: 638, y: 250, w: 16, h: 10, rotation: -0.12 }

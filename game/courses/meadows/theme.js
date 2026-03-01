@@ -336,17 +336,10 @@ function drawSign(ctx, item, palette) {
 }
 
 function applyWallMaterialFill(ctx, x, y, w, h, wallStyle, palette) {
-    if (wallStyle.material === 'stone') {
-        const stoneGrad = ctx.createLinearGradient(x, y, x, y + h);
-        stoneGrad.addColorStop(0, '#afa48f');
-        stoneGrad.addColorStop(1, '#7d725f');
-        ctx.fillStyle = stoneGrad;
-    } else {
-        const woodGrad = ctx.createLinearGradient(x, y, x, y + h);
-        woodGrad.addColorStop(0, palette.wallTrim);
-        woodGrad.addColorStop(1, palette.wallMain);
-        ctx.fillStyle = woodGrad;
-    }
+    const woodGrad = ctx.createLinearGradient(x, y, x, y + h);
+    woodGrad.addColorStop(0, palette.wallTrim);
+    woodGrad.addColorStop(1, palette.wallMain);
+    ctx.fillStyle = woodGrad;
     ctx.fillRect(x, y, w, h);
 }
 
@@ -450,13 +443,8 @@ export function drawAngledWallSkin(ctx, wall, wallStyle, palette, thickness = 16
     ctx.stroke();
 
     const grad = ctx.createLinearGradient(wall.x1, wall.y1, wall.x2, wall.y2);
-    if (wallStyle.material === 'stone') {
-        grad.addColorStop(0, '#b0a490');
-        grad.addColorStop(1, '#7d7360');
-    } else {
-        grad.addColorStop(0, palette.wallTrim);
-        grad.addColorStop(1, palette.wallMain);
-    }
+    grad.addColorStop(0, palette.wallTrim);
+    grad.addColorStop(1, palette.wallMain);
     ctx.strokeStyle = grad;
     ctx.lineWidth = width;
     ctx.beginPath();

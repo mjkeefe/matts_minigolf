@@ -36,11 +36,11 @@ export default {
             postSpacing: 34
         },
         decor: [
-            { kind: 'tree', x: 118, y: 170, h: 86, r: 30, color: '#4d6b33' },
-            { kind: 'tree', x: 564, y: 208, h: 88, r: 28, color: '#7a5c2d' },
+            { kind: 'tree', x: 118, y: 286, h: 76, r: 22, color: '#4d6b33' },
+            { kind: 'tree', x: 564, y: 300, h: 80, r: 24, color: '#7a5c2d' },
             { kind: 'pond', x: 562, y: 408, w: 120, h: 74, rotation: -0.08 },
             { kind: 'flowers', x: 132, y: 400, density: 5 },
-            { kind: 'flowers', x: 552, y: 106, density: 5 },
+            { kind: 'flowers', x: 552, y: 384, density: 5 },
             { kind: 'bush', x: 106, y: 320, r: 16 },
             { kind: 'stone', x: 108, y: 442, w: 16, h: 10, rotation: 0.2 }
         ]

@@ -37,12 +37,12 @@ export default {  // "The Gauntlet" — long narrow hallway with inner channel
             postSpacing: 38
         },
         decor: [
-            { kind: 'tree', x: 94, y: 96, h: 84, r: 28, color: '#4e6d35' },
+            { kind: 'tree', x: 94, y: 426, h: 76, r: 24, color: '#4e6d35' },
             { kind: 'tree', x: 592, y: 438, h: 82, r: 24, color: '#7d592c' },
-            { kind: 'pond', x: 584, y: 88, w: 122, h: 66, rotation: -0.08 },
+            { kind: 'pond', x: 584, y: 430, w: 122, h: 66, rotation: -0.08 },
             { kind: 'flowers', x: 84, y: 420, density: 5 },
-            { kind: 'flowers', x: 598, y: 142, density: 5 },
-            { kind: 'bush', x: 236, y: 92, r: 14 },
+            { kind: 'flowers', x: 598, y: 408, density: 5 },
+            { kind: 'bush', x: 236, y: 430, r: 14 },
             { kind: 'bush', x: 444, y: 432, r: 14 }
         ]
     }

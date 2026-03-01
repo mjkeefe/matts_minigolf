@@ -37,11 +37,11 @@ export default { // "The Volcano" — Circular center challenge
             postSpacing: 36
         },
         decor: [
-            { kind: 'pond', x: 340, y: 260, w: 188, h: 188 },
-            { kind: 'tree', x: 82, y: 124, h: 78, r: 24, color: '#4a6931' },
+            { kind: 'tree', x: 92, y: 286, h: 72, r: 22, color: '#4a6931' },
             { kind: 'tree', x: 598, y: 402, h: 84, r: 26, color: '#7c5a2b' },
             { kind: 'flowers', x: 142, y: 446, density: 5 },
-            { kind: 'flowers', x: 536, y: 92, density: 5 },
+            { kind: 'flowers', x: 536, y: 440, density: 5 },
+            { kind: 'bush', x: 534, y: 286, r: 14 },
             { kind: 'stone', x: 92, y: 346, w: 16, h: 10, rotation: 0.2 }
         ]
     }

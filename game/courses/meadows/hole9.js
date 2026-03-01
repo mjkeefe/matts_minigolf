@@ -42,9 +42,9 @@ export default {  // "The Long Shot" — endurance/distance hole
             postSpacing: 36
         },
         decor: [
-            { kind: 'tree', x: 76, y: 146, h: 76, r: 24, color: '#4d6b33' },
+            { kind: 'tree', x: 88, y: 252, h: 70, r: 22, color: '#4d6b33' },
             { kind: 'tree', x: 604, y: 392, h: 82, r: 26, color: '#7e5b2c' },
-            { kind: 'pond', x: 610, y: 132, w: 96, h: 58, rotation: -0.05 },
+            { kind: 'pond', x: 610, y: 458, w: 96, h: 58, rotation: -0.05 },
             { kind: 'flowers', x: 70, y: 394, density: 5 },
             { kind: 'flowers', x: 614, y: 444, density: 5 },
             { kind: 'bush', x: 264, y: 468, r: 14 },

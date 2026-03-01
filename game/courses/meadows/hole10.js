@@ -40,12 +40,12 @@ export default { // "The Spinner" — octagonal chaos
             postSpacing: 34
         },
         decor: [
-            { kind: 'tree', x: 98, y: 116, h: 76, r: 24, color: '#4b6a32' },
+            { kind: 'tree', x: 98, y: 266, h: 68, r: 20, color: '#4b6a32' },
             { kind: 'tree', x: 592, y: 404, h: 82, r: 26, color: '#7d5a2c' },
             { kind: 'flowers', x: 166, y: 456, density: 5 },
-            { kind: 'flowers', x: 516, y: 88, density: 5 },
+            { kind: 'flowers', x: 516, y: 430, density: 5 },
             { kind: 'bush', x: 102, y: 350, r: 14 },
-            { kind: 'bush', x: 578, y: 182, r: 14 }
+            { kind: 'bush', x: 578, y: 266, r: 14 }
         ]
     }
 };

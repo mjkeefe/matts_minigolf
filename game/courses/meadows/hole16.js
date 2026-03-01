@@ -38,10 +38,10 @@ export default { // "The Split Decision" — Branching paths
             postSpacing: 36
         },
         decor: [
-            { kind: 'tree', x: 42, y: 118, h: 72, r: 22, color: '#4a6831' },
+            { kind: 'tree', x: 78, y: 250, h: 66, r: 20, color: '#4a6831' },
             { kind: 'tree', x: 638, y: 404, h: 76, r: 24, color: '#7c592d' },
-            { kind: 'flowers', x: 150, y: 64, density: 4 },
-            { kind: 'flowers', x: 530, y: 64, density: 4 },
+            { kind: 'flowers', x: 150, y: 454, density: 4 },
+            { kind: 'flowers', x: 530, y: 454, density: 4 },
             { kind: 'flowers', x: 84, y: 448, density: 4 },
             { kind: 'flowers', x: 596, y: 448, density: 4 },
             { kind: 'stone', x: 338, y: 448, w: 16, h: 10, rotation: 0.15 }
