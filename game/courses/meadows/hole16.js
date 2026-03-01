@@ -17,7 +17,12 @@ export default { // "The Split Decision" — Branching paths
         { x: 165, y: 380, w: 50, h: 16 },
         { x: 465, y: 380, w: 50, h: 16 }
     ],
-    angledWalls: [],
+    angledWalls: [
+        { x1: 150, y1: 252, x2: 170, y2: 272 },
+        { x1: 530, y1: 252, x2: 510, y2: 272 },
+        { x1: 215, y1: 380, x2: 230, y2: 395 },
+        { x1: 465, y1: 380, x2: 450, y2: 395 }
+    ],
     bouncers: [],
     ramps: [
         { x: 170, y: 280, w: 40, h: 40, forceX: 0, forceY: -5 }, // L path boost

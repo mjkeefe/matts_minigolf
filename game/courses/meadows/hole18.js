@@ -9,22 +9,25 @@ export default { // "The Grand Finale" — The Ultimate Test
         { x: 630, y: 34, w: 16, h: 452 }
     ],
     obstacleWalls: [
-        { x: 150, y: 240, w: 80, h: 16 }, // Side bumper
-        { x: 450, y: 240, w: 80, h: 16 }, // Side bumper
-        { x: 315, y: 280, w: 50, h: 16 }  // Mid bumper
+        { x: 132, y: 240, w: 70, h: 16 }, // Side bumper
+        { x: 478, y: 240, w: 70, h: 16 }, // Side bumper
+        { x: 322, y: 280, w: 36, h: 16 }  // Mid bumper
     ],
     rotatingObstacles: [
-        { cx: 340, cy: 370, length: 140, arms: 4, speed: 0.02, width: 12 }, // Lower Windmill
-        { cx: 340, cy: 170, length: 160, arms: 2, speed: -0.04, width: 12 } // Fast Upper Swiper
+        { cx: 340, cy: 370, length: 112, arms: 4, speed: 0.015, width: 12 }, // Lower Windmill
+        { cx: 340, cy: 170, length: 128, arms: 2, speed: -0.026, width: 12 } // Fast Upper Swiper
     ],
-    angledWalls: [],
+    angledWalls: [
+        { x1: 212, y1: 256, x2: 238, y2: 282 },
+        { x1: 468, y1: 256, x2: 442, y2: 282 }
+    ],
     bouncers: [
-        { x: 100, y: 100, r: 30, color: '#F44336' },
-        { x: 580, y: 100, r: 30, color: '#F44336' }
+        { x: 100, y: 100, r: 24, color: '#F44336' },
+        { x: 580, y: 100, r: 24, color: '#F44336' }
     ],
     ramps: [
-        { x: 100, y: 300, w: 40, h: 40, forceX: 0, forceY: -5 },
-        { x: 540, y: 300, w: 40, h: 40, forceX: 0, forceY: -5 }
+        { x: 100, y: 300, w: 40, h: 40, forceX: 0, forceY: -4 },
+        { x: 540, y: 300, w: 40, h: 40, forceX: 0, forceY: -4 }
     ],
     theme: {
         palette: {

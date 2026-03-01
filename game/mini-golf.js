@@ -23,7 +23,7 @@ const SPEED_SCALE = 0.052;
 const BALL_RADIUS = 7;
 const HOLE_RADIUS = 15;     // slightly larger = more forgiving
 const HOLE_SINK_DIST = 16;     // sink threshold
-const MAX_STROKES = 10;
+const MAX_STROKES = Number.POSITIVE_INFINITY; // legacy value; no longer enforced
 const WALL_THICKNESS = 16;
 const BOUNCER_RADIUS = 28;
 const BOUNCER_COLORS = ['#FF5722', '#FF9800', '#E91E63', '#9C27B0', '#2196F3', '#00BCD4'];
@@ -292,13 +292,13 @@ function showSelectionScreen() {
                 <div class="mg-color-picker-wrap">
                     <p>Customize Ball Color</p>
                     <div class="mg-color-picker">
-                        <button class="mg-color-btn" data-color="#FFFFFF" style="background:#FFFFFF;"></button>
-                        <button class="mg-color-btn" data-color="#FF4136" style="background:#FF4136;"></button>
-                        <button class="mg-color-btn" data-color="#FF851B" style="background:#FF851B;"></button>
-                        <button class="mg-color-btn" data-color="#FFDC00" style="background:#FFDC00;"></button>
-                        <button class="mg-color-btn" data-color="#2ECC40" style="background:#2ECC40;"></button>
-                        <button class="mg-color-btn" data-color="#0074D9" style="background:#0074D9;"></button>
-                        <button class="mg-color-btn" data-color="#B10DC9" style="background:#B10DC9;"></button>
+                        <button class="mg-color-btn" data-color="#FFFFFF" style="--ball-color:#FFFFFF;" aria-label="White golf ball"></button>
+                        <button class="mg-color-btn" data-color="#FF4136" style="--ball-color:#FF4136;" aria-label="Red golf ball"></button>
+                        <button class="mg-color-btn" data-color="#FF851B" style="--ball-color:#FF851B;" aria-label="Orange golf ball"></button>
+                        <button class="mg-color-btn" data-color="#FFDC00" style="--ball-color:#FFDC00;" aria-label="Yellow golf ball"></button>
+                        <button class="mg-color-btn" data-color="#2ECC40" style="--ball-color:#2ECC40;" aria-label="Green golf ball"></button>
+                        <button class="mg-color-btn" data-color="#0074D9" style="--ball-color:#0074D9;" aria-label="Blue golf ball"></button>
+                        <button class="mg-color-btn" data-color="#B10DC9" style="--ball-color:#B10DC9;" aria-label="Purple golf ball"></button>
                     </div>
                 </div>
             </div>
@@ -941,34 +941,15 @@ function shoot() {
     totalStrokes = strokesPerHole.reduce((a, b) => a + b, 0) + holeStrokes;
     updateHUD();
     playSound('shoot');
-
-    // Hard stroke limit
-    if (holeStrokes >= MAX_STROKES) {
-        forceAdvanceHole();
-    }
 }
 
 // =====================================================
-//  Force Advance (max strokes)
+//  Force Advance (legacy no-op)
 // =====================================================
-function forceAdvanceHole() {
-    animTimeout = setTimeout(() => {
-        if (!gameActive) return;
-        playSound('hit');
-
-        strokesPerHole.push(holeStrokes);
-        totalStrokes = strokesPerHole.reduce((a, b) => a + b, 0);
-
-        const isLastHole = (currentHole >= holeCount);
-        if (isLastHole) {
-            setTimeout(() => showScorecard(), 400);
-        } else {
-            showForceAdvanceMessage();
-        }
-    }, 1500); // wait for ball to move a bit first
-}
+function forceAdvanceHole() {}
 
 function showForceAdvanceMessage() {
+    return;
     showOverlay(`
         <h2 style="color:#ffdd00;">Moving On! 🏃</h2>
         <p>Max ${MAX_STROKES} strokes reached</p>
@@ -1356,38 +1337,56 @@ function drawBall() {
     if (!ball) return;
 
     ctx.save();
+    ctx.fillStyle = 'rgba(18, 14, 9, 0.24)';
+    ctx.beginPath();
+    ctx.ellipse(ball.x + 1.5, ball.y + BALL_RADIUS * 0.95, BALL_RADIUS * 1.1, BALL_RADIUS * 0.56, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
     ctx.translate(ball.x, ball.y);
-    ctx.rotate(ball.angle);
 
-    // Ball ambient drop shadow (centered slightly under)
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.arc(0, 2, BALL_RADIUS + 1, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ball base color
-    ctx.fillStyle = ballColor;
+    const shell = ctx.createRadialGradient(-BALL_RADIUS * 0.35, -BALL_RADIUS * 0.42, BALL_RADIUS * 0.2, 0, 0, BALL_RADIUS * 1.1);
+    shell.addColorStop(0, '#ffffff');
+    shell.addColorStop(0.22, ballColor);
+    shell.addColorStop(0.72, ballColor);
+    shell.addColorStop(1, 'rgba(36,36,36,0.94)');
+    ctx.fillStyle = shell;
     ctx.beginPath();
     ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
 
-    // 3D sphere shading overlay (inner shadow + highlight)
-    const blurObj = ctx.createRadialGradient(-BALL_RADIUS * 0.3, -BALL_RADIUS * 0.3, BALL_RADIUS * 0.1, 0, 0, BALL_RADIUS);
-    blurObj.addColorStop(0, 'rgba(255,255,255,0.6)');
-    blurObj.addColorStop(0.5, 'rgba(255,255,255,0.1)');
-    blurObj.addColorStop(1, 'rgba(0,0,0,0.4)');
-    ctx.fillStyle = blurObj;
+    const sheen = ctx.createRadialGradient(-BALL_RADIUS * 0.52, -BALL_RADIUS * 0.6, 0, -BALL_RADIUS * 0.45, -BALL_RADIUS * 0.5, BALL_RADIUS * 0.95);
+    sheen.addColorStop(0, 'rgba(255,255,255,0.88)');
+    sheen.addColorStop(0.38, 'rgba(255,255,255,0.24)');
+    sheen.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = sheen;
     ctx.beginPath();
     ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
     ctx.fill();
 
-    // Dimples
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    [[-3, -2], [3, -2], [0, 3], [-4, 2], [4, 2]].forEach(([dx, dy]) => {
+    ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, BALL_RADIUS - 0.7, Math.PI * 0.92, Math.PI * 1.78);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(22,22,22,0.16)';
+    [
+        [-4.4, -2.6], [-1.3, -3.9], [2.2, -3.2], [4.5, -0.8],
+        [-4.7, 1.1], [-2.1, 0.2], [0.8, 0.1], [3.6, 1.9],
+        [-2.8, 3.4], [0.4, 3.5], [2.9, 3.1]
+    ].forEach(([dx, dy]) => {
         ctx.beginPath();
-        ctx.arc(dx, dy, 1.2, 0, Math.PI * 2);
+        ctx.arc(dx, dy, 0.95, 0, Math.PI * 2);
         ctx.fill();
     });
+
+    ctx.strokeStyle = 'rgba(92,70,38,0.24)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, BALL_RADIUS - 0.5, 0, Math.PI * 2);
+    ctx.stroke();
 
     ctx.restore();
 }

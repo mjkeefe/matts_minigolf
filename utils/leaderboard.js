@@ -52,31 +52,26 @@ export function showGameOver(gameName, score, container, onPlayAgain) {
     if (!container) return;
 
     container.innerHTML = `
-        <div class="game-over-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white; background: rgba(0,0,0,0.9); z-index: 200; position: absolute; top: 0; left: 0; width: 100%;">
-            <h1 style="color: #ff0055; font-size: 4em; margin-bottom: 20px; text-shadow: 0 0 10px #ff0055;">GAME OVER</h1>
-            
-            <div class="score-display" style="font-size: 2em; margin-bottom: 30px;">
-                SCORE: <span style="color: #ffcc00;">${score}</span>
-            </div>
+        <div class="mg-final-screen">
+            <div class="mg-final-panel">
+                <p class="mg-final-kicker">Round Complete</p>
+                <h1 class="mg-final-title">Final Score</h1>
+                <div class="mg-final-score">
+                    <span class="mg-final-score-label">Strokes</span>
+                    <span class="mg-final-score-value">${score}</span>
+                </div>
 
-            <div id="name-input-section" style="text-align: center;">
-                <p style="font-size: 1.2em; margin-bottom: 10px;">Enter your name:</p>
-                <input type="text" id="player-name" maxlength="10" autofocus 
-                    style="font-size: 1.5em; padding: 10px; border-radius: 5px; border: none; text-align: center; width: 250px; color: black;">
-                <br><br>
-                <button id="submit-score-btn" 
-                    style="font-size: 1.2em; padding: 10px 30px; background: #00ff66; border: none; border-radius: 50px; cursor: pointer; color: black; font-weight: bold; transition: transform 0.2s;">
-                    SUBMIT SCORE
-                </button>
-            </div>
+                <div id="name-input-section" class="mg-final-form">
+                    <label for="player-name">Save your round</label>
+                    <input type="text" id="player-name" maxlength="10" autofocus class="mg-final-input">
+                    <button id="submit-score-btn" class="mg-next-btn" type="button">Submit Score</button>
+                </div>
 
-            <div id="leaderboard-section" class="hidden" style="width: 100%; max-width: 500px;"></div>
-            
-            <div id="action-buttons" class="hidden" style="margin-top: 30px;">
-                <button id="play-again-btn" 
-                    style="font-size: 1.5em; padding: 15px 40px; background: #00ccff; border: none; border-radius: 50px; cursor: pointer; color: black; font-weight: bold; margin: 0 10px; box-shadow: 0 0 15px #00ccff;">
-                    PLAY AGAIN
-                </button>
+                <div id="leaderboard-section" class="mg-final-leaderboard hidden"></div>
+
+                <div id="action-buttons" class="mg-final-actions hidden">
+                    <button id="main-menu-btn" class="mg-next-btn" type="button">Back to Main Menu</button>
+                </div>
             </div>
         </div>
     `;
@@ -86,7 +81,8 @@ export function showGameOver(gameName, score, container, onPlayAgain) {
     const submitBtn = container.querySelector('#submit-score-btn');
     const leaderboardSection = container.querySelector('#leaderboard-section');
     const actionButtons = container.querySelector('#action-buttons');
-    const playAgainBtn = container.querySelector('#play-again-btn');
+    const mainMenuBtn = container.querySelector('#main-menu-btn');
+    let scoreSubmitted = false;
 
     // Focus input
     setTimeout(() => {
@@ -94,8 +90,14 @@ export function showGameOver(gameName, score, container, onPlayAgain) {
     }, 100);
 
     const handleSubmit = () => {
+        if (scoreSubmitted) return;
+        scoreSubmitted = true;
+
         const name = input.value.trim() || 'Anonymous';
         saveScore(gameName, name, score);
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (input) input.disabled = true;
 
         // UI Transition
         inputSection.classList.add('hidden');
@@ -113,8 +115,8 @@ export function showGameOver(gameName, score, container, onPlayAgain) {
         };
     }
 
-    if (playAgainBtn) {
-        playAgainBtn.onclick = () => {
+    if (mainMenuBtn) {
+        mainMenuBtn.onclick = () => {
             if (typeof onPlayAgain === 'function') {
                 onPlayAgain();
             }
@@ -129,28 +131,27 @@ export function renderLeaderboard(gameName, container) {
     const scores = getLeaderboard(gameName);
 
     let html = `
-        <h2 style="color: var(--accent-blue); margin-bottom: 20px;">TOP SCORES</h2>
-        <table style="width: 100%; max-width: 500px; margin: 0 auto; border-collapse: collapse;">
-            <tr style="border-bottom: 2px solid #555; color: #aaa;">
-                <th style="padding: 5px; font-size: 0.9em; text-align: center;">RANK</th>
-                <th style="padding: 5px; font-size: 0.9em; text-align: center;">NAME</th>
-                <th style="padding: 5px; font-size: 0.9em; text-align: center;">SCORE</th>
+        <h2 class="mg-final-board-title">Top Scores</h2>
+        <table class="mg-final-board-table">
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Score</th>
             </tr>
     `;
 
     if (scores.length === 0) {
-        html += `<tr><td colspan="3" style="padding: 15px; text-align: center;">No scores yet!</td></tr>`;
+        html += `<tr><td colspan="3" class="mg-final-empty">No scores yet!</td></tr>`;
     } else {
         scores.forEach((entry, index) => {
-            const isFirst = index === 0;
-            const rowStyle = isFirst ? 'color: var(--accent-yellow); font-weight: bold; font-size: 1.1em;' : 'font-size: 0.9em;';
+            const rowClass = index === 0 ? 'mg-final-top-row' : '';
             const rank = index + 1;
 
             html += `
-                <tr style="${rowStyle} border-bottom: 1px solid #333;">
-                    <td style="padding: 4px 10px; text-align: center;">#${rank}</td>
-                    <td style="padding: 4px 10px; text-align: center;">${entry.name}</td>
-                    <td style="padding: 4px 10px; text-align: center;">${entry.score}</td>
+                <tr class="${rowClass}">
+                    <td>#${rank}</td>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
                 </tr>
             `;
         });

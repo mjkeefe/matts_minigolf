@@ -20,7 +20,10 @@ export default { // "The Zig-Zag" — Simple Z corridor
         { x: 84, y: 470, w: 512, h: 16 }
     ],
     obstacleWalls: [],
-    angledWalls: [],
+    angledWalls: [
+        { x1: 462, y1: 150, x2: 480, y2: 168 },
+        { x1: 480, y1: 352, x2: 462, y2: 370 }
+    ],
     bouncers: [],
     ramps: [],
     theme: {
