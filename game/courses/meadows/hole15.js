@@ -30,5 +30,28 @@ export default { // "The Bridge" — Vertical connection with sweepers
     ],
     angledWalls: [],
     bouncers: [],
-    ramps: []
+    ramps: [],
+    theme: {
+        palette: {
+            skyTop: '#6074b8',
+            skyBottom: '#efaf84',
+            grassBase: '#80995f',
+            rough: '#675932',
+            path: '#b79d67',
+            wallMain: '#8b633d',
+            wallTrim: '#e0c587'
+        },
+        wallStyle: {
+            material: 'wood',
+            postSpacing: 34
+        },
+        decor: [
+            { kind: 'tree', x: 84, y: 250, h: 84, r: 26, color: '#4d6c33' },
+            { kind: 'tree', x: 596, y: 252, h: 86, r: 28, color: '#7f5d2b' },
+            { kind: 'pond', x: 192, y: 258, w: 128, h: 74 },
+            { kind: 'pond', x: 488, y: 258, w: 128, h: 74 },
+            { kind: 'flowers', x: 152, y: 486, density: 5 },
+            { kind: 'flowers', x: 526, y: 486, density: 5 }
+        ]
+    }
 };

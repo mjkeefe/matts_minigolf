@@ -26,5 +26,29 @@ export default {  // "The Long Shot" — endurance/distance hole
     ramps: [
         { x: 100, y: 240, w: 40, h: 40, forceX: 5, forceY: 0 },
         { x: 530, y: 240, w: 50, h: 40, forceX: 4, forceY: 0 }
-    ]
+    ],
+    theme: {
+        palette: {
+            skyTop: '#6075b8',
+            skyBottom: '#efae83',
+            grassBase: '#809960',
+            rough: '#675a31',
+            path: '#b79e68',
+            wallMain: '#8b633d',
+            wallTrim: '#e0c587'
+        },
+        wallStyle: {
+            material: 'wood',
+            postSpacing: 36
+        },
+        decor: [
+            { kind: 'tree', x: 88, y: 252, h: 70, r: 22, color: '#4d6b33' },
+            { kind: 'tree', x: 604, y: 392, h: 82, r: 26, color: '#7e5b2c' },
+            { kind: 'pond', x: 610, y: 458, w: 96, h: 58, rotation: -0.05 },
+            { kind: 'flowers', x: 70, y: 394, density: 5 },
+            { kind: 'flowers', x: 614, y: 444, density: 5 },
+            { kind: 'bush', x: 264, y: 468, r: 14 },
+            { kind: 'stone', x: 74, y: 238, w: 16, h: 10, rotation: 0.18 }
+        ]
+    }
 };
