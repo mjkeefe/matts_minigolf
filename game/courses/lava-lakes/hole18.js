@@ -2,8 +2,8 @@ export default {
     floors: [
         { x: 60, y: 60, w: 560, h: 400 }
     ],
-    tee: { x: 340, y: 414 },
-    hole: { x: 340, y: 108 },
+    tee: { x: 100, y: 420 },
+    hole: { x: 580, y: 100 },
     outerWalls: [
         { x: 44, y: 44, w: 592, h: 16 },
         { x: 44, y: 460, w: 592, h: 16 },
@@ -11,26 +11,31 @@ export default {
         { x: 620, y: 44, w: 16, h: 432 }
     ],
     obstacleWalls: [
-        { x: 140, y: 340, w: 120, h: 16 },
-        { x: 244, y: 260, w: 16, h: 96 },
-        { x: 244, y: 260, w: 180, h: 16 },
-        { x: 408, y: 180, w: 16, h: 96 },
-        { x: 170, y: 206, w: 28, h: 28 },
-        { x: 250, y: 178, w: 28, h: 28 },
-        { x: 336, y: 220, w: 28, h: 28 },
-        { x: 428, y: 194, w: 28, h: 28 }
+        { x: 150, y: 340, w: 140, h: 16 },
+        { x: 274, y: 260, w: 16, h: 96 },
+        { x: 274, y: 260, w: 180, h: 16 },
+        { x: 438, y: 176, w: 16, h: 100 },
+        { x: 174, y: 210, w: 30, h: 30 },
+        { x: 258, y: 184, w: 30, h: 30 },
+        { x: 348, y: 226, w: 30, h: 30 },
+        { x: 446, y: 198, w: 30, h: 30 }
     ],
     angledWalls: [
-        { x1: 260, y1: 356, x2: 320, y2: 260 },
-        { x1: 424, y1: 260, x2: 486, y2: 180 }
+        { x1: 290, y1: 356, x2: 348, y2: 260 },
+        { x1: 454, y1: 260, x2: 512, y2: 176 }
     ],
     rotatingObstacles: [
-        { cx: 340, cy: 148, length: 88, arms: 4, speed: 0.018, width: 12 }
+        { cx: 340, cy: 150, length: 86, arms: 4, speed: 0.018, width: 12 }
     ],
-    bouncers: [],
+    bouncers: [
+        { x: 540, y: 360, r: 20, color: '#d85f28' }
+    ],
     ramps: [
-        { x: 284, y: 372, w: 52, h: 32, forceX: 1.9, forceY: -2.1 },
-        { x: 438, y: 214, w: 52, h: 32, forceX: 1.2, forceY: -2.4 },
-        { x: 296, y: 120, w: 88, h: 30, forceX: 0, forceY: -2.8 }
+        { x: 520, y: 300, w: 44, h: 44, forceX: 0.6, forceY: -2.0 }
+    ],
+    lavaVents: [
+        { x: 332, y: 388, r: 22, forceX: 1.6, forceY: -1.7, speed: 0.05 },
+        { x: 486, y: 228, r: 22, forceX: 1.0, forceY: -1.8, speed: 0.045 },
+        { x: 340, y: 132, r: 24, forceX: 0, forceY: -2.2, speed: 0.04 }
     ]
 };

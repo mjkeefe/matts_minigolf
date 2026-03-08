@@ -1,32 +1,28 @@
 export default {
     floors: [
-        { x: 110, y: 70, w: 460, h: 380 }
+        { x: 110, y: 80, w: 460, h: 360 }
     ],
-    tee: { x: 340, y: 404 },
-    hole: { x: 340, y: 112 },
+    tee: { x: 150, y: 390 },
+    hole: { x: 530, y: 120 },
     outerWalls: [
-        { x: 94, y: 54, w: 492, h: 16 },
-        { x: 94, y: 450, w: 492, h: 16 },
-        { x: 94, y: 54, w: 16, h: 412 },
-        { x: 570, y: 54, w: 16, h: 412 }
+        { x: 94, y: 64, w: 492, h: 16 },
+        { x: 94, y: 440, w: 492, h: 16 },
+        { x: 94, y: 64, w: 16, h: 392 },
+        { x: 570, y: 64, w: 16, h: 392 }
     ],
     obstacleWalls: [
-        { x: 312, y: 222, w: 56, h: 80 }
+        { x: 220, y: 292, w: 130, h: 16 },
+        { x: 360, y: 212, w: 130, h: 16 },
+        { x: 452, y: 120, w: 16, h: 72 }
     ],
-    angledWalls: [],
+    angledWalls: [
+        { x1: 188, y1: 344, x2: 220, y2: 292 },
+        { x1: 490, y1: 212, x2: 530, y2: 152 }
+    ],
     bouncers: [],
-    ramps: [
-        { x: 280, y: 150, w: 120, h: 32, forceX: 0, forceY: -3.2 }
-    ],
-    theme: {
-        wallStyle: { material: 'volcanic' },
-        decor: [
-            { kind: 'lavaPool', x: 150, y: 118, w: 72, h: 34, rotation: -0.12 },
-            { kind: 'lavaPool', x: 530, y: 392, w: 88, h: 40, rotation: 0.15 },
-            { kind: 'emberVent', x: 142, y: 170, intensity: 4 },
-            { kind: 'emberVent', x: 540, y: 330, intensity: 5 },
-            { kind: 'crackStone', x: 86, y: 250, w: 18, h: 12, rotation: 0.2 },
-            { kind: 'crackStone', x: 602, y: 226, w: 20, h: 12, rotation: -0.18 }
-        ]
-    }
+    ramps: [],
+    lavaVents: [
+        { x: 288, y: 356, r: 22, forceX: 1.2, forceY: -1.1, speed: 0.04 },
+        { x: 414, y: 168, r: 22, forceX: 0.8, forceY: -1.6, speed: 0.045 }
+    ]
 };

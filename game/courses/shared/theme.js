@@ -313,31 +313,21 @@ function drawSign(ctx, item, palette) {
 
 function applyWallMaterialFill(ctx, x, y, w, h, wallStyle, palette) {
     if (wallStyle.material === 'volcanic') {
-        const lavaGrad = ctx.createLinearGradient(x, y, x, y + h);
-        lavaGrad.addColorStop(0, '#3a3a3a');
-        lavaGrad.addColorStop(0.55, palette.wallMain);
-        lavaGrad.addColorStop(1, '#111111');
-        ctx.fillStyle = lavaGrad;
+        const rockGrad = ctx.createLinearGradient(x, y, x, y + h);
+        rockGrad.addColorStop(0, '#454545');
+        rockGrad.addColorStop(0.4, '#2f2f2f');
+        rockGrad.addColorStop(1, '#171717');
+        ctx.fillStyle = rockGrad;
         ctx.fillRect(x, y, w, h);
 
-        const seamCount = Math.max(3, Math.floor((w >= h ? w : h) / 30));
-        ctx.strokeStyle = 'rgba(255, 120, 54, 0.18)';
-        ctx.lineWidth = 1.5;
-        for (let i = 0; i < seamCount; i++) {
-            const t = (i + 1) / (seamCount + 1);
-            ctx.beginPath();
-            if (w >= h) {
-                const px = x + (w * t);
-                ctx.moveTo(px - 6, y + 3);
-                ctx.lineTo(px + 3, y + h * 0.45);
-                ctx.lineTo(px - 4, y + h - 3);
-            } else {
-                const py = y + (h * t);
-                ctx.moveTo(x + 3, py - 6);
-                ctx.lineTo(x + w * 0.55, py + 2);
-                ctx.lineTo(x + w - 3, py - 5);
-            }
-            ctx.stroke();
+        const chips = Math.max(6, Math.floor((w * h) / 420));
+        for (let i = 0; i < chips; i++) {
+            const px = x + ((i * 31) % Math.max(1, w - 4)) + 2;
+            const py = y + ((i * 17) % Math.max(1, h - 4)) + 2;
+            const rw = 2 + ((i * 7) % 4);
+            const rh = 1 + ((i * 5) % 3);
+            ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.22)';
+            ctx.fillRect(px, py, rw, rh);
         }
         return;
     }
@@ -442,14 +432,22 @@ function drawLavaPool(ctx, item) {
 
 function drawEmberVent(ctx, item) {
     const intensity = item.intensity || 4;
+    ctx.strokeStyle = 'rgba(255, 152, 88, 0.28)';
+    ctx.lineWidth = 1.6;
     for (let i = 0; i < intensity; i++) {
-        const dx = (i - ((intensity - 1) / 2)) * 6;
-        const dy = i * -8;
-        const r = 2 + (i % 2);
-        ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 178, 72, 0.78)' : 'rgba(255, 96, 38, 0.72)';
+        const ox = (i - ((intensity - 1) / 2)) * 5;
+        const height = 12 + (i * 4);
         ctx.beginPath();
-        ctx.arc(item.x + dx, item.y + dy, r, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.moveTo(item.x + ox, item.y + 2);
+        ctx.bezierCurveTo(
+            item.x + ox - 4,
+            item.y - height * 0.3,
+            item.x + ox + 6,
+            item.y - height * 0.65,
+            item.x + ox - 2,
+            item.y - height
+        );
+        ctx.stroke();
     }
 }
 

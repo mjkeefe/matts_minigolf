@@ -210,6 +210,11 @@ function gameLoop(timestamp) {
             ro.angle = (ro.angle || 0) + (ro.speed || 0.02) * dt;
         }
     }
+    if (course && course.lavaVents) {
+        for (const vent of course.lavaVents) {
+            vent.phase = (vent.phase || 0) + (vent.speed || 0.04) * dt;
+        }
+    }
 
     if (!gameActive || holeComplete) {
         render();
@@ -667,6 +672,31 @@ function update(dt) {
     // Bouncer collision
     handleBouncerCollisions();
 
+    // Lava vent force fields
+    if (course.lavaVents) {
+        for (const vent of course.lavaVents) {
+            const dx = ball.x - vent.x;
+            const dy = ball.y - vent.y;
+            const dist = Math.hypot(dx, dy);
+            const radius = vent.r || 30;
+            if (dist > radius) continue;
+
+            const pulse = 0.7 + (Math.sin(vent.phase || 0) * 0.3);
+            const proximity = 1 - (dist / radius);
+            const boost = pulse * proximity * 0.045 * dt;
+
+            ball.vx += (vent.forceX || 0) * boost;
+            ball.vy += (vent.forceY || -1.5) * boost;
+
+            if (dist > 0) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                ball.vx += nx * 0.012 * dt;
+                ball.vy += ny * 0.012 * dt;
+            }
+        }
+    }
+
     // Ramp boost
     if (course.ramps) {
         for (const r of course.ramps) {
@@ -1088,6 +1118,7 @@ function render() {
     drawSurfaceEdge(ctx, { course, courseTheme, canvasW: CANVAS_W, canvasH: CANVAS_H });
 
     drawRamps();
+    drawLavaVents();
     drawRotatingObstacles();
     drawBouncers();
     drawHole();
@@ -1314,6 +1345,54 @@ function drawBouncers() {
     }
 }
 
+function drawLavaVents() {
+    if (!course || !course.lavaVents) return;
+
+    for (const vent of course.lavaVents) {
+        const pulse = 0.72 + (Math.sin(vent.phase || 0) * 0.28);
+        const r = vent.r || 30;
+
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+
+        const glow = ctx.createRadialGradient(vent.x, vent.y, 4, vent.x, vent.y, r + 12);
+        glow.addColorStop(0, 'rgba(255, 214, 124, 0.95)');
+        glow.addColorStop(0.4, 'rgba(255, 124, 58, 0.8)');
+        glow.addColorStop(1, 'rgba(255, 84, 35, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(vent.x, vent.y, (r + 10) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#2b1b18';
+        ctx.beginPath();
+        ctx.arc(vent.x, vent.y, r * 0.52, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 188, 96, 0.72)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(vent.x, vent.y, r * 0.78, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 140, 70, 0.35)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 3; i++) {
+            const wobble = (Math.sin((vent.phase || 0) * 2 + i) * 4);
+            ctx.beginPath();
+            ctx.moveTo(vent.x - 8 + (i * 6), vent.y - r * 0.1);
+            ctx.bezierCurveTo(
+                vent.x - 10 + wobble + (i * 6), vent.y - r * 0.6,
+                vent.x + 4 + wobble + (i * 4), vent.y - r * 1.1,
+                vent.x - 2 + (i * 5), vent.y - r * 1.5
+            );
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+}
+
 function drawHole() {
     const { x, y } = course.hole;
     const palette = course.theme?.palette || getActiveThemeDefaults().palette;
@@ -1335,6 +1414,22 @@ function drawHole() {
         ctx.strokeStyle = 'rgba(255, 128, 72, 0.8)';
         ctx.lineWidth = 3;
         ctx.stroke();
+
+        ctx.strokeStyle = '#f0e2c5';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x, y - 30);
+        ctx.stroke();
+
+        ctx.fillStyle = palette.flag;
+        ctx.beginPath();
+        ctx.moveTo(x, y - 30);
+        ctx.lineTo(x + 18, y - 24);
+        ctx.lineTo(x, y - 14);
+        ctx.closePath();
+        ctx.fill();
         return;
     }
 

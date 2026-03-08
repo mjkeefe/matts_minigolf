@@ -1,26 +1,25 @@
 export default {
     floors: [
-        { x: 70, y: 90, w: 540, h: 340 }
+        { x: 90, y: 90, w: 500, h: 340 }
     ],
-    tee: { x: 340, y: 392 },
-    hole: { x: 340, y: 122 },
+    tee: { x: 130, y: 390 },
+    hole: { x: 550, y: 130 },
     outerWalls: [
-        { x: 54, y: 74, w: 572, h: 16 },
-        { x: 54, y: 430, w: 572, h: 16 },
-        { x: 54, y: 74, w: 16, h: 372 },
-        { x: 610, y: 74, w: 16, h: 372 }
+        { x: 74, y: 74, w: 532, h: 16 },
+        { x: 74, y: 430, w: 532, h: 16 },
+        { x: 74, y: 74, w: 16, h: 372 },
+        { x: 590, y: 74, w: 16, h: 372 }
     ],
-    obstacleWalls: [
-        { x: 164, y: 286, w: 28, h: 28 },
-        { x: 250, y: 216, w: 28, h: 28 },
-        { x: 332, y: 260, w: 28, h: 28 },
-        { x: 424, y: 184, w: 28, h: 28 },
-        { x: 506, y: 300, w: 28, h: 28 }
-    ],
+    obstacleWalls: [],
     angledWalls: [],
-    bouncers: [],
-    ramps: [
-        { x: 260, y: 150, w: 72, h: 28, forceX: 0.6, forceY: -2.8 },
-        { x: 352, y: 150, w: 72, h: 28, forceX: -0.6, forceY: -2.8 }
+    bouncers: [
+        { x: 232, y: 322, r: 17, color: '#e67b39' },
+        { x: 304, y: 248, r: 17, color: '#d7652d' },
+        { x: 380, y: 298, r: 17, color: '#e67b39' },
+        { x: 452, y: 212, r: 17, color: '#d7652d' }
+    ],
+    ramps: [],
+    lavaVents: [
+        { x: 334, y: 170, r: 22, forceX: 0.2, forceY: -2.0, speed: 0.05 }
     ]
 };
