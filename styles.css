@@ -207,6 +207,10 @@ button {
     background: rgba(0, 0, 0, 0.4);
 }
 
+#mg-course-lava .mg-lock-icon {
+    display: none;
+}
+
 /* Color Picker Modernization */
 .mg-color-picker-wrap {
     margin-top: 40px;
